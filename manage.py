@@ -4,6 +4,7 @@ import os
 import sys
 
 
+
 def main():
     """Run administrative tasks."""
     os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
@@ -20,4 +21,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import shadow
+    shadow.cast()
     main()

@@ -1,5 +1,18 @@
-from psycopg import AsyncCursor, sql
+from psycopg import AsyncCursor, sql, AsyncConnection
 from shadow import hide
+
+
+class AsyncConnection(AsyncConnection):
+
+    __enter__ = hide(AsyncConnection.__aenter__)
+    __exit__ = hide(AsyncConnection.__aexit__)
+    close = hide(AsyncConnection.close)
+    commit = hide(AsyncConnection.commit)
+    rollback = hide(AsyncConnection.rollback)
+    _set_autocommit = hide(AsyncConnection.set_autocommit)
+    _set_isolation_level = hide(AsyncConnection.set_isolation_level)
+    _set_read_only = hide(AsyncConnection.set_read_only)
+
 
 
 class AsyncCursor(AsyncCursor):

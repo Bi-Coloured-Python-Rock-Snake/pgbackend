@@ -9,7 +9,7 @@ from django.shortcuts import render
 # Create your views here.
 
 
-@reveal
+# @reveal
 def make(request):
     size = random.choice(range(1, 11))
     obj = Cubicle(size=size)
@@ -18,7 +18,7 @@ def make(request):
     return JsonResponse({'size': obj.size})
 
 
-@reveal
+# @reveal
 def show(request):
     params = Cubicle.objects.values('size')
 
