@@ -77,6 +77,7 @@ WSGI_APPLICATION = "souslik.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'pgbackend',
+        # 'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'souslik',
         'USER': 'vabetkin001',
         'PASSWORD': 'mypassword',

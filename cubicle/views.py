@@ -11,7 +11,7 @@ from django.shortcuts import render
 # Create your views here.
 
 
-# @reveal
+@reveal
 def make(request):
     size = random.choice(range(1, 11))
     obj = Cubicle(size=size)
@@ -20,11 +20,20 @@ def make(request):
     return JsonResponse({'size': obj.size})
 
 
-# @reveal
+@reveal
 def show(request):
     params = Cubicle.objects.values('size')
 
     return JsonResponse(list(params), safe=False)
+
+
+@reveal
+def send(request):
+    from souslik import asgi
+    consumer = asgi.consumers[request.user.username]
+    consumer.send_json(['yo'])
+    return HttpResponse('ok')
+
 
 def index(request):
     html = Path(dirname(__file__)) / 'testws.html'

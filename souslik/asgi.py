@@ -10,24 +10,31 @@ https://docs.djangoproject.com/en/dev/howto/deployment/asgi/
 import os
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from channels.routing import URLRouter
+from channels.routing import ProtocolTypeRouter
+from shadow import hide
+
+from cubicle.auth import AuthMiddlewareStack
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 from django.core.asgi import get_asgi_application
-from django.urls import path, re_path
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "souslik.settings")
 
+consumers = {}
 
 class Consumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
         await super().connect()
+        consumers[self.scope['user'].username] = self
         await self.send_json(["hey", "you"])
 
 
-application = URLRouter([
-    path("ws", Consumer.as_asgi()),
-    re_path(r"", get_asgi_application()),
-])
+Consumer.send_json = hide(Consumer.send_json)
+
+
+application = ProtocolTypeRouter({
+    "websocket": AuthMiddlewareStack(Consumer.as_asgi()),
+    "http": get_asgi_application(),
+})
