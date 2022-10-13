@@ -1,4 +1,6 @@
 import random
+from os.path import dirname
+from pathlib import Path
 
 from shadow import reveal
 
@@ -23,3 +25,9 @@ def show(request):
     params = Cubicle.objects.values('size')
 
     return JsonResponse(list(params), safe=False)
+
+def index(request):
+    html = Path(dirname(__file__)) / 'testws.html'
+    with open(html) as f:
+        html = f.read()
+    return HttpResponse(html)

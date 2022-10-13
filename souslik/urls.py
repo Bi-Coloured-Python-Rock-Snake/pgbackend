@@ -13,13 +13,18 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from cubicle.views import show, make
+import channels
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
+
+from cubicle.views import show, make, index
 from django.contrib import admin
 from django.urls import path
+
 
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("show", show),
     path("make", make),
+    path('', index),
 ]
