@@ -1,6 +1,6 @@
 import random
 
-from greenbrew import green_spawn
+from shadow import reveal
 
 from cubicle.models import Cubicle
 from django.http import HttpResponse, JsonResponse
@@ -9,7 +9,7 @@ from django.shortcuts import render
 # Create your views here.
 
 
-@green_spawn
+@reveal
 def make(request):
     size = random.choice(range(1, 11))
     obj = Cubicle(size=size)
@@ -18,7 +18,7 @@ def make(request):
     return JsonResponse({'size': obj.size})
 
 
-@green_spawn
+@reveal
 def show(request):
     params = Cubicle.objects.values('size')
 
