@@ -5,12 +5,13 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.routing import ProtocolTypeRouter
 from greenhack import exempt
 
-from cubicle.auth import AuthMiddlewareStack
 
 from django.core.asgi import get_asgi_application
 
+from auth_middleware import AuthMiddlewareStack
+
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "souslik.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "proj.settings")
 
 consumers = {}
 

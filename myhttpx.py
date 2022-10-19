@@ -1,9 +1,9 @@
-import httpx as httpx
-from shadow import hide
+import httpx
+from greenhack import exempt
 
 
 def make_method(method):
-    @hide
+    @exempt
     async def wrapper(*args, **kw):
         async with httpx.AsyncClient() as client:
             return await getattr(client, method)(*args, **kw)

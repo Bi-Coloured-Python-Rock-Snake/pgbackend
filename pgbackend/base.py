@@ -18,6 +18,9 @@ class Overrider:
         self.base = base
         self.__dict__.update(kw)
 
+    def __getattr__(self, item):
+        return getattr(self.base, item)
+
 
 class DatabaseWrapper(base.DatabaseWrapper):
     from . import Database

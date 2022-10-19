@@ -21,6 +21,4 @@ def main():
 
 
 if __name__ == "__main__":
-    import greenhack
-    greenhack.start_loop()
     main()

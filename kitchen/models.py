@@ -4,8 +4,12 @@ from django.db import models
 
 
 class Order(models.Model):
-    pass
+    details = models.TextField()
+
+    def as_dict(self):
+        return {'order_id': self.id, 'details': self.details}
 
 
 def prepare_order(request):
-    return Order()
+    details = request.DATA['details']
+    return Order(details=details)
