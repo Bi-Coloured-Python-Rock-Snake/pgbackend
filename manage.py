@@ -21,6 +21,6 @@ def main():
 
 
 if __name__ == "__main__":
-    import shadow
-    shadow.cast()
+    import greenhack
+    greenhack.start_loop()
     main()

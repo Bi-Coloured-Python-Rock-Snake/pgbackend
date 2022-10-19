@@ -1,6 +1,6 @@
 from psycopg import *
-from shadow import hide
+from greenhack import exempt
 
 from .cursor import AsyncConnection
 
-connect = hide(AsyncConnection.connect)
+connect = exempt(AsyncConnection.connect)

@@ -1,12 +1,44 @@
+import psycopg_pool
 from django.conf import settings
+from greenhack import exempt
 from psycopg import IsolationLevel
+from psycopg.adapt import AdaptersMap
+from psycopg.conninfo import make_conninfo
 
 import pgbackend.cursor
 
 from django.db.backends.postgresql import base
 
+from pgbackend.cursor import AsyncConnection
+
+
+class Overrider:
+
+    def __init__(self, base, **kw):
+        self.base = base
+        self.__dict__.update(kw)
+
+
 class DatabaseWrapper(base.DatabaseWrapper):
     from . import Database
+
+    pool = None
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.Database = Overrider(self.Database, connect=self.get_conn_from_pool)
+
+    @exempt
+    async def get_conn_from_pool(self, *, context, **conn_params):
+        if not self.pool:
+            async def configure(conn):
+                conn._adapters = AdaptersMap(context.adapters)
+            conninfo = make_conninfo(**conn_params)
+            self.pool = psycopg_pool.AsyncConnectionPool(conninfo, connection_class=AsyncConnection, open=False,
+                                                         configure=configure)
+            await self.pool.open()
+        connection = await self.pool.connection().__aenter__()
+        return connection
 
     # a copy of the inherited method
     def get_new_connection(self, conn_params):
