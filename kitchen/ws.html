@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Chat</title>
+        <title>Websocket</title>
     </head>
     <body>
-        <h1>WebSocket connections</h1>
-        <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" autocomplete="off"/>
-            <button>Send</button>
-        </form>
+        <h1 id="topcaption">Connecting...</h1>
         <ul id='messages'>
         </ul>
         <script>
             var ws = new WebSocket("ws://localhost:8000/connect/");
+            ws.onopen = function(event) {
+                var elem = document.getElementById('topcaption')
+                elem.innerHTML = 'Connected'
+            };
             ws.onmessage = function(event) {
                 var messages = document.getElementById('messages')
                 var message = document.createElement('li')
@@ -20,12 +20,6 @@
                 message.appendChild(content)
                 messages.appendChild(message)
             };
-            function sendMessage(event) {
-                var input = document.getElementById("messageText")
-                ws.send(input.value)
-                input.value = ''
-                event.preventDefault()
-            }
         </script>
     </body>
 </html>

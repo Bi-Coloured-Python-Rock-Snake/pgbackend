@@ -12,7 +12,7 @@ from django.db.backends.postgresql import base
 from pgbackend.cursor import AsyncConnection
 
 
-class Overrider:
+class Wrapper:
 
     def __init__(self, base, **kw):
         self.base = base
@@ -29,7 +29,7 @@ class DatabaseWrapper(base.DatabaseWrapper):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.Database = Overrider(self.Database, connect=self.get_conn_from_pool)
+        self.Database = Wrapper(self.Database, connect=self.get_conn_from_pool)
 
     @exempt
     async def get_conn_from_pool(self, *, context, **conn_params):

@@ -11,5 +11,5 @@ class Order(models.Model):
 
 
 def prepare_order(request):
-    details = request.DATA['details']
+    details = request.POST.get('details', '')
     return Order(details=details)
