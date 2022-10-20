@@ -1,5 +1,5 @@
 """
-This is blah-blah
+This is a slightly modified channels code
 """
 
 

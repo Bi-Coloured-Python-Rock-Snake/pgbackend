@@ -44,8 +44,9 @@ class DatabaseWrapper(base.DatabaseWrapper):
         return connection
 
     # a copy of the inherited method
+    # will not be required
     def get_new_connection(self, conn_params):
-        Database = self.Database
+        Database = self.Database  # this is the missing line that was the reason to copy
         assert self.is_psycopg3
         ctx = base.get_adapters_template(settings.USE_TZ, self.timezone)
         connection = Database.connect(**conn_params, context=ctx)

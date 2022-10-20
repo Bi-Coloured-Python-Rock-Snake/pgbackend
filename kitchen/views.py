@@ -7,7 +7,7 @@ from greenhack import as_async
 
 import myhttpx
 from kitchen.models import Order, prepare_order
-from proj import asgi
+from kitchen import ws
 
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -25,8 +25,8 @@ def food_delivery(request):
     resp = myhttpx.post(settings.KITCHEN_SERVICE, data=order.as_dict())
     match resp.status_code, resp.json():
         case 201, {"mins": _mins} as when:
-            if ws := asgi.consumers.get(request.user.username):
-                ws.send_json(when)
+            if consumer := ws.consumers.get(request.user.username):
+                consumer.send_json(when)
             return JsonResponse(when)
         case _:
             kitchen_error(resp)
