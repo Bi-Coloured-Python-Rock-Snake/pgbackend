@@ -10,5 +10,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await super().connect()
         consumers[self.scope['user'].username] = self
 
+    async def disconnect(self, code):
+        await super().disconnect(code=code)
+        consumers.pop(self.scope['user'].username, None)
 
 Consumer.send_json = exempt(Consumer.send_json)
