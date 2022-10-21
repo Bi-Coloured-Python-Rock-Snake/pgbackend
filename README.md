@@ -13,6 +13,7 @@ uvicorn proj.asgi:application --port 8000
 ```
 
 `GET http://localhost:8000/connect/` - to connect by websocket
+
 `GET http://localhost:8000/` - to make an order
 
 `./manage.py makemigrations --check` - console utilities
