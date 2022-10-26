@@ -29,9 +29,13 @@ class DatabaseWrapper(base.DatabaseWrapper):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
+        #TODO nodb
         self.Database = Wrapper(self.Database, connect=self.get_conn_from_pool)
 
-    @exempt
+        # def cb(self, *args, **kw):
+        #     1
+
+    @exempt()
     async def get_conn_from_pool(self, *, context, **conn_params):
         if not self.pool:
             async def configure(conn):
@@ -41,7 +45,15 @@ class DatabaseWrapper(base.DatabaseWrapper):
                                                          configure=configure)
             await self.pool.open()
         connection = await self.pool.connection().__aenter__()
+
+        def close(close_con=connection.close):
+            # close_con()
+            exempt(self.pool.close)()
+            self.pool = None
+
+        connection.close = close
         return connection
+
 
     # a copy of the inherited method
     # will not be required

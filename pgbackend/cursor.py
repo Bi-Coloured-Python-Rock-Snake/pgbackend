@@ -4,6 +4,8 @@ from greenhack import  exempt
 
 class AsyncConnection(AsyncConnection):
 
+    #FIXME
+
     __enter__ = exempt(AsyncConnection.__aenter__)
     __exit__ = exempt(AsyncConnection.__aexit__)
     close = exempt(AsyncConnection.close)
@@ -14,8 +16,29 @@ class AsyncConnection(AsyncConnection):
     _set_read_only = exempt(AsyncConnection.set_read_only)
 
 
+def connect(*args, **kw):
+    ac = AsyncConnection(*args, **kw)
+    ob = VirtualConnection()
+    ob.ac = ac
+    return ac
+
+
+class VirtualConnection:
+    pool: object
+
+    @exempt
+    async def close(self):
+        await self.pool.close()
+
+    @exempt
+    async def commit(self):
+        await self.ac.commit()
+
 
 class AsyncCursor(AsyncCursor):
+
+    # def cb(self, *ar, **kw):
+    #     1
 
     execute = exempt(AsyncCursor.execute)
     executemany = exempt(AsyncCursor.executemany)
