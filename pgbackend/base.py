@@ -9,7 +9,7 @@ import pgbackend.cursor
 
 from django.db.backends.postgresql import base
 
-from pgbackend.cursor import AsyncConnection
+from pgbackend.cursor import ConnWrapper, AsyncCursor, CursorWrapper, CursorDebugWrapper
 
 
 class Wrapper:
@@ -30,30 +30,22 @@ class DatabaseWrapper(base.DatabaseWrapper):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         #TODO nodb
-        self.Database = Wrapper(self.Database, connect=self.get_conn_from_pool)
+        # self.Database = Wrapper(self.Database, connect=self.get_conn_from_pool)
 
-        # def cb(self, *args, **kw):
-        #     1
+    # def cb(self, *args, **kw):
+    #     1
 
-    @exempt()
-    async def get_conn_from_pool(self, *, context, **conn_params):
-        if not self.pool:
-            async def configure(conn):
-                conn._adapters = AdaptersMap(context.adapters)
-            conninfo = make_conninfo(**conn_params)
-            self.pool = psycopg_pool.AsyncConnectionPool(conninfo, connection_class=AsyncConnection, open=False,
-                                                         configure=configure)
-            await self.pool.open()
-        connection = await self.pool.connection().__aenter__()
-
-        def close(close_con=connection.close):
-            # close_con()
-            exempt(self.pool.close)()
-            self.pool = None
-
-        connection.close = close
-        return connection
-
+    # @exempt()
+    # async def get_conn_from_pool(self, *, context, **conn_params):
+    #     if not self.pool:
+    #         async def configure(conn):
+    #             conn._adapters = AdaptersMap(context.adapters)
+    #         conninfo = make_conninfo(**conn_params)
+    #         self.pool = psycopg_pool.AsyncConnectionPool(conninfo, open=False, configure=configure)
+    #         await self.pool.open()
+    #     #TODO refactor
+    #     connection = await self.pool.connection().__aenter__()
+    #     return ConnWrapper(self.pool, connection)
 
     # a copy of the inherited method
     # will not be required
@@ -90,5 +82,11 @@ class DatabaseWrapper(base.DatabaseWrapper):
     def get_new_connection(self, conn_params,
                            get_new_connection=get_new_connection):
         connection = get_new_connection(self, conn_params)
-        connection.cursor_factory = pgbackend.cursor.AsyncCursor
-        return connection
+        connection.cursor_factory = AsyncCursor
+        return ConnWrapper(connection, self)
+
+    def make_debug_cursor(self, cursor):
+        return CursorDebugWrapper(cursor, self)
+
+    def make_cursor(self, cursor):
+        return CursorWrapper(cursor, self)
