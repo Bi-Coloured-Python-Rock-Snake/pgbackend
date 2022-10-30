@@ -1,15 +1,8 @@
-import psycopg_pool
 from django.conf import settings
-from greenhack import exempt
-from psycopg import IsolationLevel
-from psycopg.adapt import AdaptersMap
-from psycopg.conninfo import make_conninfo
-
-import pgbackend.cursor
-
 from django.db.backends.postgresql import base
+from psycopg import IsolationLevel, AsyncCursor
 
-from pgbackend.cursor import ConnWrapper, AsyncCursor, CursorWrapper, CursorDebugWrapper
+from pgbackend.cursor import ConnWrapper, CursorWrapper, CursorDebugWrapper
 
 
 class Wrapper:
