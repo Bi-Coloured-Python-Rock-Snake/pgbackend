@@ -1,7 +1,9 @@
 import greenhack
-from django.db.backends import utils
 from greenhack import exempt
 from psycopg import sql
+
+from django.db.backends import utils
+from django.db import NotSupportedError
 
 
 def get_db():
