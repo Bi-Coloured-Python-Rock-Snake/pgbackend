@@ -1,3 +1,5 @@
+import functools
+
 import greenhack
 from greenhack import exempt
 from psycopg import sql
