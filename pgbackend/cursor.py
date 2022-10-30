@@ -1,12 +1,7 @@
-from dataclasses import dataclass
-
 import greenhack
-from greenhack import exempt
-from psycopg import AsyncCursor, sql
-
 from django.db.backends import utils
-
-from . import pool
+from greenhack import exempt
+from psycopg import sql
 
 
 def get_db():
@@ -73,42 +68,6 @@ class ConnWrapper:
 
 
 #TODO set connection = None in base.py
-
-
-#TODO context conn, sometimes None
-
-# class AsyncCursor(AsyncCursor):
-#
-#     execute = exempt(AsyncCursor.execute)
-#     executemany = exempt(AsyncCursor.executemany)
-#     fetchall = exempt(AsyncCursor.fetchall)
-#     fetchone = exempt(AsyncCursor.fetchone)
-#     fetchmany = exempt(AsyncCursor.fetchmany)
-#     copy = exempt(AsyncCursor.copy)
-#
-#     __enter__ = exempt(AsyncCursor.__aenter__)
-#     __exit__ = exempt(AsyncCursor.__aexit__)
-#
-#     def callproc(self, name, args=None):
-#         if not isinstance(name, sql.Identifier):
-#             name = sql.Identifier(name)
-#
-#         qparts = [sql.SQL("select * from "), name, sql.SQL("(")]
-#         if args:
-#             for item in args:
-#                 qparts.append(sql.Literal(item))
-#                 qparts.append(sql.SQL(","))
-#             del qparts[-1]
-#
-#         qparts.append(sql.SQL(")"))
-#         stmt = sql.Composed(qparts)
-#         self.execute(stmt)
-#         return args
-#
-#     @exempt
-#     async def close(self, _close=AsyncCursor.close):
-#         await _close(self)
-#
 
 
 class CursorWrapper:
