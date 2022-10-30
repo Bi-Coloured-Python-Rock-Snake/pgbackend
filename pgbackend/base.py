@@ -20,26 +20,6 @@ class DatabaseWrapper(base.DatabaseWrapper):
 
     pool = None
 
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
-        #TODO nodb
-        # self.Database = Wrapper(self.Database, connect=self.get_conn_from_pool)
-
-    # def cb(self, *args, **kw):
-    #     1
-
-    # @exempt()
-    # async def get_conn_from_pool(self, *, context, **conn_params):
-    #     if not self.pool:
-    #         async def configure(conn):
-    #             conn._adapters = AdaptersMap(context.adapters)
-    #         conninfo = make_conninfo(**conn_params)
-    #         self.pool = psycopg_pool.AsyncConnectionPool(conninfo, open=False, configure=configure)
-    #         await self.pool.open()
-    #     #TODO refactor
-    #     connection = await self.pool.connection().__aenter__()
-    #     return ConnWrapper(self.pool, connection)
-
     # a copy of the inherited method
     # will not be required
     def get_new_connection(self, conn_params):

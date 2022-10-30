@@ -130,7 +130,5 @@ dmypy.json
 
 .idea/
 
-Pipfile
-Pipfile.lock
 
 *.whl

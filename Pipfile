@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+httpx = "*"
+channels = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+django = {file = "https://github.com/apollo13/django/archive/psycopg3.zip"}
+pgbackend = {editable = true, path = "."}
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
