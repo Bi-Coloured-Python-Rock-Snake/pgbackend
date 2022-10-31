@@ -7,74 +7,14 @@ from psycopg import sql
 from django.db.backends import utils
 from django.db import NotSupportedError
 
+from . import connection
 
-def get_db():
-    ctx = greenhack.context.var.get()
-    return ctx.connections.default
-
-
-
-class ConnWrapper:
-    def __init__(self, conn, db):
-        self.conn = conn
-        self.db = db
-
-    # conn in django is meant to be reused
-    # so conn.close() is called when all db connections need to be closed
-    #
-
-    def __getattr__(self, attr):
-        return getattr(self.conn, attr)
-
-    def __setattr__(self, name, value):
-        if name == 'conn' or name == 'db':
-            super().__setattr__(name, value)
-        elif name == 'autocommit':
-            self._set_autocommit(value)
-        else:
-            setattr(self.conn, name, value)
-
-    @exempt
-    async def close(self):
-        await self.conn.close()
-
-    @exempt
-    async def commit(self):
-        await self.conn.commit()
-
-    @exempt
-    async def rollback(self):
-        await self.conn.rollback()
-
-    @exempt
-    async def __enter__(self):
-        return await self.conn.__aenter__()
-
-    @exempt
-    async def __exit__(self, exc_type, exc_val, exc_tb):
-        return await self.conn.__aexit__(exc_type, exc_val, exc_tb)
-
-    @exempt
-    async def _set_autocommit(self, value):
-        return await self.conn.set_autocommit(value)
-
-    @exempt
-    async def _set_isolation_level(self, value):
-        return await self.conn.set_isolation_level(value)
-
-    @exempt
-    async def _set_read_only(self, value):
-        return await self.conn.set_read_only(value)
-
-    def cursor(self):
-        cursor = self.conn.cursor()
-        return CursorWrapper(cursor, self.db)
-
-
-#TODO set connection = None in base.py
 
 
 class CursorWrapper:
+    #cursor.close releases connection
+
+
     def __init__(self, cursor, db):
         self.cursor = cursor
         self.db = db
@@ -95,6 +35,7 @@ class CursorWrapper:
             yield from self.cursor
 
     def __enter__(self):
+        connection.var.set(self.cursor.connection)
         return self
 
     @exempt
@@ -106,6 +47,7 @@ class CursorWrapper:
             await self.cursor.close()
         except self.db.Database.Error:
             pass
+        connection.var.set(None)
 
     # The following methods cannot be implemented in __getattr__, because the
     # code must run when the method is invoked, not just when it is accessed.

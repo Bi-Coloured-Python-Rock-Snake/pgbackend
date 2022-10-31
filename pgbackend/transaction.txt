@@ -1,0 +1,7 @@
+
+
+@atomic - change?
+
+set conn in var
+
+cursor() always creates cursor
