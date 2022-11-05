@@ -1,4 +1,5 @@
 import functools
+from contextlib import contextmanager
 
 import greenhack
 from greenhack import exempt
@@ -10,10 +11,7 @@ from django.db import NotSupportedError
 from . import connection
 
 
-
 class CursorWrapper:
-    #cursor.close releases connection
-
 
     def __init__(self, cursor, db):
         self.cursor = cursor
@@ -35,19 +33,17 @@ class CursorWrapper:
             yield from self.cursor
 
     def __enter__(self):
-        connection.var.set(self.cursor.connection)
         return self
 
-    @exempt
-    async def __exit__(self, type, value, traceback):
+    def __exit__(self, type, value, traceback):
+        pass
         # Close instead of passing through to avoid backend-specific behavior
         # (#17671). Catch errors liberally because errors in cleanup code
         # aren't useful.
-        try:
-            await self.cursor.close()
-        except self.db.Database.Error:
-            pass
-        connection.var.set(None)
+        # try:
+        #     self.close()
+        # except self.db.Database.Error:
+        #     pass
 
     # The following methods cannot be implemented in __getattr__, because the
     # code must run when the method is invoked, not just when it is accessed.
@@ -136,9 +132,21 @@ class CursorWrapper:
     async def copy(self):
         return await self.cursor.copy()
 
-    @exempt
-    async def close(self):
-        return await self.cursor.close()
+    # @exempt
+    # async def close(connection):
+    #     # await connection.commit()
+    #     await connection.__aexit__(None, None, None)
+
+    def close(self):
+        pass
+        # exempt(self.cursor.close)()
+        # if not (conn := connection.connection_var.get()):
+        #     return
+        # (conn, cursor_scope) = conn
+        # if cursor_scope:
+        #     assert conn is self.cursor.connection
+        #     commit_and_close(conn)
+        #     connection.connection_var.set(None)
 
 
 class CursorDebugWrapper(utils.CursorDebugWrapper, CursorWrapper, utils.CursorWrapper):

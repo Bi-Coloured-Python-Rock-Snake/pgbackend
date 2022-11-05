@@ -1,57 +1,86 @@
+import typing
+from contextlib import asynccontextmanager, nullcontext, contextmanager
 from contextvars import ContextVar
 from functools import cached_property
 
 import psycopg_pool
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from greenhack import exempt
+from greenhack import exempt, exempt_cm
 from psycopg import IsolationLevel
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
 
 from pgbackend.cursor import CursorDebugWrapper, CursorWrapper
 
-var = ContextVar('connection', default=None)
+connection_var = ContextVar('connection', default=None)
+cursor_var = ContextVar('cursor', default=None)
+
+
+class Var(typing.NamedTuple):
+    connection: object
+    cursor_scope: bool
+
 
 from django.db.backends.postgresql import base
 
 
 #connect() starts a pool
 class PooledConnection:
-    pool: object = None
 
-    def __init__(self, conn_params, db):
-        self.conn_params = conn_params
+    def __init__(self, db):
         self.db = db
+        self.pool = self.make_pool()  # ?
+
+    #TODO introduce getval only from sync greenlet
 
     def __getattr__(self, item):
-        if conn := var.get():
+        if conn := connection_var.get():
+            (conn, _) = conn
             return getattr(conn, item)
         raise AttributeError
 
-    async def make_pool(self):
-        conninfo = make_conninfo(**self.conn_params)
-        self.pool = psycopg_pool.AsyncConnectionPool(conninfo, open=False,
-                                                configure=self.configure_connection)
-        await self.pool.open()
-
-    #TODO make cursor here?
     @exempt
-    async def cursor(self):
-        if self.pool is None:
-            await self.make_pool()
-        if not (conn := var.get()):
-            conn = await self.pool.connection().__aenter__()
-        cursor = conn.cursor()
-        if self.db.queries_logged:
-            return self.make_debug_cursor(cursor)
-        else:
-            return self.make_cursor(cursor)
+    async def make_pool(self):
+        conn_params = self.db.get_connection_params()
+        conninfo = make_conninfo(**conn_params)
+        pool = psycopg_pool.AsyncConnectionPool(conninfo, open=False,
+                                                configure=self.configure_connection)
+        await pool.open()
+        return pool
 
-    def make_debug_cursor(self, cursor):
-        return CursorDebugWrapper(cursor, self.db)
+    @exempt_cm
+    @asynccontextmanager
+    async def cursor(self):
+        if not (_conn := connection_var.get()):
+            conn_ct = self.pool.connection()
+        else:
+            conn_ct = nullcontext()
+        async with conn_ct as conn:
+            conn = conn or _conn
+            async with conn.cursor() as cur:
+                yield self.make_cursor(cur)
+
+    @contextmanager
+    def cursor(self, cursor_cm=cursor):
+        with cursor_cm(self) as cur:
+            try:
+                cursor_var.set(cur)
+                yield
+            finally:
+                cursor_var.set(None)
+
+    def cursor(self, cursor_cm=cursor):
+        if cur := cursor_var.get():
+            return cur
+        return cursor_cm(self)
 
     def make_cursor(self, cursor):
+        return CursorDebugWrapper(cursor, self.db)
+
+    def make_cursor(self, cursor, make_debug_cursor=make_cursor):
+        if self.db.queries_logged:
+            return make_debug_cursor(self, cursor)
         return CursorWrapper(cursor, self.db)
 
     @cached_property
@@ -76,3 +105,5 @@ class PooledConnection:
                     "'psycopg.IsolationLevel' values" % (options["isolation_level"],)
                 )
         await connection.set_isolation_level(isolation_level)
+
+        #TODO init_connection_state

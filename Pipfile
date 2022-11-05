@@ -9,8 +9,9 @@ channels = "*"
 uvicorn = {extras = ["standard"], version = "*"}
 django = {file = "https://github.com/apollo13/django/archive/psycopg3.zip"}
 pgbackend = {editable = true, path = "."}
+cm-decor = {editable = true, path = "/home/pwtail/sof/ct_decor"}
 
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3.10"
