@@ -1,20 +1,34 @@
 from contextlib import contextmanager
+from functools import cached_property
+
+from django.db import connections
+from greenhack import exempt_cm
+
+from pgbackend.connection import connection_var
 
 
 class Atomic:
-    'TODO'
 
-    def __init__(self, using, savepoint, durable, **kw):
-        self.using = using
-        self.savepoint = savepoint
-        self.durable = durable
-
-    @contextmanager
-    def as_context_manager(self):
-        yield
-
+    @property
     def __enter__(self):
-        return self
+        return self._cm.__enter__
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+    @property
+    def __exit__(self):
+        return self._cm.__exit__
+
+    @exempt_cm
+    def _cm(self):
+        db = connections[self.using]
+        pool = db.connection.pool
+        return pool.connection()
+
+    @cached_property
+    @contextmanager
+    def _cm(self, _cm=_cm):
+        with _cm(self) as conn:
+            connection_var.set(conn)
+            try:
+                yield
+            finally:
+                connection_var.set(None)

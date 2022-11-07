@@ -1,6 +1,6 @@
 import typing
 
-from django.db.models.sql.compiler import SQLCompiler
+from django.db.models.sql.compiler import SQLCompiler, SQLInsertCompiler
 from django.db.models.sql.constants import MULTI, GET_ITERATOR_CHUNK_SIZE, CURSOR
 from django.db.transaction import Atomic
 
@@ -38,6 +38,18 @@ def execute_sql(
 
 
 SQLCompiler.execute_sql = execute_sql
+
+
+@cm
+def execute_sql(
+    self, returning_fields=None,
+    execute_sql=SQLInsertCompiler.execute_sql, *, cm
+):
+    cm.enter_context(self.connection.cursor())
+    return execute_sql(self, returning_fields=returning_fields)
+
+
+SQLInsertCompiler.execute_sql = execute_sql
 
 
 def __init__(self, *args,
