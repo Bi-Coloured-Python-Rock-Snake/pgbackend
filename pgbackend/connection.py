@@ -1,4 +1,4 @@
-from contextlib import asynccontextmanager, nullcontext, contextmanager
+from contextlib import nullcontext, contextmanager
 from contextvars import ContextVar
 from functools import cached_property
 
@@ -12,7 +12,6 @@ from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
 
 from pgbackend.cursor import CursorDebugWrapper, CursorWrapper, cursor_var
-
 
 connection_var = ContextVar('connection', default=None)
 
@@ -36,6 +35,11 @@ class PooledConnection:
         await pool.open()
         self.pool = pool
 
+    @property
+    def commit(self):
+        assert (conn := connection_var.get())
+        return exempt(conn.commit)
+
     @exempt_cm
     def get_conn(self):
         return self.pool.connection()
@@ -50,8 +54,8 @@ class PooledConnection:
             try:
                 if not existing_conn:
                     connection_var.set(conn)
-                if not getattr(conn, '_django_initialized', False):
-                    conn._django_initialized = True
+                if not hasattr(conn, '_django_init'):
+                    conn._django_init = 'started'
                     self.db.init_connection_state()
                 yield conn
             finally:
@@ -73,7 +77,6 @@ class PooledConnection:
                 finally:
                     cursor_var.set(None)
 
-    # FIXME make ._cm attribute in cursor
     def cursor(self, cursor_cm=cursor):
         if cur := cursor_var.get():
             return cur
