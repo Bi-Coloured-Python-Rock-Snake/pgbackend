@@ -26,23 +26,15 @@ class CursorWrapper:
             return cursor_attr
 
     def __iter__(self):
-        #TODO
         raise NotImplementedError
-        with self.db.wrap_database_errors:
-            yield from self.cursor
+        # with self.db.wrap_database_errors:
+        #     yield from self.cursor
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
         pass
-        # Close instead of passing through to avoid backend-specific behavior
-        # (#17671). Catch errors liberally because errors in cleanup code
-        # aren't useful.
-        # try:
-        #     self.close()
-        # except self.db.Database.Error:
-        #     pass
 
     # The following methods cannot be implemented in __getattr__, because the
     # code must run when the method is invoked, not just when it is accessed.
@@ -72,7 +64,7 @@ class CursorWrapper:
                 "Keyword parameters for callproc are not supported on this "
                 "database backend."
             )
-        self.db.validate_no_broken_transaction()
+        # self.db.validate_no_broken_transaction()
         with self.db.wrap_database_errors:
             if params is None and kparams is None:
                 return callproc(self, procname)
@@ -100,7 +92,6 @@ class CursorWrapper:
 
     @exempt
     async def _execute(self, sql, params, *ignored_wrapper_args):
-        self.db.validate_no_broken_transaction()
         with self.db.wrap_database_errors:
             if params is None:
                 # params default might be backend specific.
@@ -110,42 +101,27 @@ class CursorWrapper:
 
     @exempt
     async def _executemany(self, sql, param_list, *ignored_wrapper_args):
-        self.db.validate_no_broken_transaction()
         with self.db.wrap_database_errors:
             return await self.cursor.executemany(sql, param_list)
 
-    #TODO ineffective?
-    @exempt
-    async def fetchmany(self, size=0):
-        return await self.cursor.fetchmany(size)
+    @property
+    def fetchmany(self):
+        return exempt(self.cursor.fetchmany)
 
-    @exempt
-    async def fetchall(self):
-        return await self.cursor.fetchall()
+    @property
+    def fetchall(self):
+        return exempt(self.cursor.fetchall)
 
-    @exempt
-    async def fetchone(self):
-        return await self.cursor.fetchone()
+    @property
+    def fetchone(self):
+        return exempt(self.cursor.fetchone)
 
-    @exempt
-    async def copy(self):
-        return await self.cursor.copy()
-
-    # @exempt
-    # async def close(connection):
-    #     # await connection.commit()
-    #     await connection.__aexit__(None, None, None)
+    @property
+    def copy(self):
+        return exempt(self.cursor.copy)
 
     def close(self):
         pass
-        # exempt(self.cursor.close)()
-        # if not (conn := connection.connection_var.get()):
-        #     return
-        # (conn, cursor_scope) = conn
-        # if cursor_scope:
-        #     assert conn is self.cursor.connection
-        #     commit_and_close(conn)
-        #     connection.connection_var.set(None)
 
 
 class CursorDebugWrapper(utils.CursorDebugWrapper, CursorWrapper, utils.CursorWrapper):
