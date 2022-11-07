@@ -1,7 +1,7 @@
 import typing
 
 from cm_decor import cm
-from django.db.backends.mysql import compiler
+from django.db.models.sql import compiler
 from django.db.models.sql.constants import MULTI, CURSOR
 
 
@@ -29,25 +29,21 @@ class ExecuteSql:
         return super().execute_sql(*args, **kwargs)
 
 
-class SQLCompiler(ExecuteSql, compiler.SQLCompiler):
+class SQLCompiler(compiler.SQLCompiler):
 
-    def execute_sql(self, result_type=MULTI, chunked_fetch=False, chunk_size=None):
+    @cm
+    def execute_sql(self, result_type=MULTI, chunked_fetch=False, chunk_size=None, *, cm):
         assert not chunked_fetch
+        cm.enter_context(self.connection.cursor())
         result = super().execute_sql(result_type=result_type)
         if result_type == CURSOR:
             return Cursor.clone(result)
         return result
 
 
-class SQLInsertCompiler(ExecuteSql, compiler.SQLInsertCompiler):# , CursorWrapper, utils.CursorWrapper):
+class SQLInsertCompiler(ExecuteSql, compiler.SQLInsertCompiler):
     pass
 
 
-class SQLDeleteCompiler(ExecuteSql, compiler.SQLDeleteCompiler):# , CursorWrapper, utils.CursorWrapper):
+class SQLDeleteCompiler(SQLCompiler, compiler.SQLDeleteCompiler):
     pass
-
-# FIXME FIXME
-"""
-from kitchen.models import *; print(Order.objects.all().delete())
-(-1, {'kitchen.Order': -1})
-"""

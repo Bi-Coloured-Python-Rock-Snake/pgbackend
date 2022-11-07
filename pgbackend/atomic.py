@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from dataclasses import dataclass
 from functools import cached_property
 
 from django.db import connections
@@ -7,7 +8,11 @@ from greenhack import exempt_cm
 from pgbackend.connection import connection_var
 
 
+@dataclass
 class Atomic:
+    using: str
+    savepoint: bool
+    durable: bool
 
     @property
     def __enter__(self):
