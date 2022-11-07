@@ -62,14 +62,11 @@ class PooledConnection:
                 if not existing_conn:
                     connection_var.set(None)
 
-    @exempt_cm
-    def cursor(self, conn):
-        return conn.cursor()
-
     @contextmanager
-    def cursor(self, cursor_cm=cursor):
+    def cursor(self):
         with self.get_conn() as conn:
-            with cursor_cm(self, conn) as cur:
+            cursor_cm = exempt_cm(conn.cursor)
+            with cursor_cm() as cur:
                 cur = self.make_cursor(cur)
                 try:
                     cursor_var.set(cur)
