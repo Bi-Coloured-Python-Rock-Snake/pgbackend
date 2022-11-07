@@ -37,26 +37,43 @@ class PooledConnection:
         self.pool = pool
 
     @exempt_cm
-    @asynccontextmanager
-    async def cursor(self):
-        if not (_conn := connection_var.get()):
-            conn_ct = self.pool.connection()
+    def get_conn(self):
+        return self.pool.connection()
+
+    @contextmanager
+    def get_conn(self, get_conn=get_conn):
+        if existing_conn := connection_var.get():
+            cm = nullcontext(existing_conn)
         else:
-            conn_ct = nullcontext()
-        async with conn_ct as conn:
-            conn = conn or _conn
-            async with conn.cursor() as cur:
-                yield self.make_cursor(cur)
+            cm = get_conn(self)
+        with cm as conn:
+            try:
+                if not existing_conn:
+                    connection_var.set(conn)
+                if not getattr(conn, '_django_initialized', False):
+                    conn._django_initialized = True
+                    self.db.init_connection_state()
+                yield conn
+            finally:
+                if not existing_conn:
+                    connection_var.set(None)
+
+    @exempt_cm
+    def cursor(self, conn):
+        return conn.cursor()
 
     @contextmanager
     def cursor(self, cursor_cm=cursor):
-        with cursor_cm(self) as cur:
-            try:
-                cursor_var.set(cur)
-                yield
-            finally:
-                cursor_var.set(None)
+        with self.get_conn() as conn:
+            with cursor_cm(self, conn) as cur:
+                cur = self.make_cursor(cur)
+                try:
+                    cursor_var.set(cur)
+                    yield cur
+                finally:
+                    cursor_var.set(None)
 
+    # FIXME make ._cm attribute in cursor
     def cursor(self, cursor_cm=cursor):
         if cur := cursor_var.get():
             return cur
@@ -92,5 +109,3 @@ class PooledConnection:
                     "'psycopg.IsolationLevel' values" % (options["isolation_level"],)
                 )
         await connection.set_isolation_level(isolation_level)
-
-        #TODO init_connection_state
