@@ -8,48 +8,48 @@ from cm_decor import cm
 from pgbackend import atomic
 
 
-class Cursor(typing.NamedTuple):
-    rowcount: int
-    # lastrowid: str
-    # description: tuple
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc_info):
-        pass
-
-    @classmethod
-    def clone(cls, cursor):
-        return cls(rowcount=cursor.rowcount) #, lastrowid=cursor.lastrowid)
-
-
-@cm
-def execute_sql(
-    self, result_type=MULTI, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE,
-    execute_sql=SQLCompiler.execute_sql, *, cm
-):
-    cm.enter_context(self.connection.cursor())
-    assert not chunked_fetch
-    result = execute_sql(self, result_type=result_type)
-    if result_type == CURSOR:
-        return Cursor.clone(result)
-    return result
-
-
-SQLCompiler.execute_sql = execute_sql
-
-
-@cm
-def execute_sql(
-    self, returning_fields=None,
-    execute_sql=SQLInsertCompiler.execute_sql, *, cm
-):
-    cm.enter_context(self.connection.cursor())
-    return execute_sql(self, returning_fields=returning_fields)
-
-
-SQLInsertCompiler.execute_sql = execute_sql
+# class Cursor(typing.NamedTuple):
+#     rowcount: int
+#     # lastrowid: str
+#     # description: tuple
+#
+#     def __enter__(self):
+#         return self
+#
+#     def __exit__(self, *exc_info):
+#         pass
+#
+#     @classmethod
+#     def clone(cls, cursor):
+#         return cls(rowcount=cursor.rowcount) #, lastrowid=cursor.lastrowid)
+#
+#
+# @cm
+# def execute_sql(
+#     self, result_type=MULTI, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE,
+#     execute_sql=SQLCompiler.execute_sql, *, cm
+# ):
+#     cm.enter_context(self.connection.cursor())
+#     assert not chunked_fetch
+#     result = execute_sql(self, result_type=result_type)
+#     if result_type == CURSOR:
+#         return Cursor.clone(result)
+#     return result
+#
+#
+# SQLCompiler.execute_sql = execute_sql
+#
+#
+# @cm
+# def execute_sql(
+#     self, returning_fields=None,
+#     execute_sql=SQLInsertCompiler.execute_sql, *, cm
+# ):
+#     cm.enter_context(self.connection.cursor())
+#     return execute_sql(self, returning_fields=returning_fields)
+#
+#
+# SQLInsertCompiler.execute_sql = execute_sql
 
 
 def __init__(self, *args,

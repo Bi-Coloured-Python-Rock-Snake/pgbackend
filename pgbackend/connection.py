@@ -1,4 +1,3 @@
-import typing
 from contextlib import asynccontextmanager, nullcontext, contextmanager
 from contextvars import ContextVar
 from functools import cached_property
@@ -6,48 +5,36 @@ from functools import cached_property
 import psycopg_pool
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.db.backends.postgresql import base
 from greenhack import exempt, exempt_cm
 from psycopg import IsolationLevel
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
 
-from pgbackend.cursor import CursorDebugWrapper, CursorWrapper
+from pgbackend.cursor import CursorDebugWrapper, CursorWrapper, cursor_var
+
 
 connection_var = ContextVar('connection', default=None)
-cursor_var = ContextVar('cursor', default=None)
 
 
-class Var(typing.NamedTuple):
-    connection: object
-    cursor_scope: bool
-
-
-from django.db.backends.postgresql import base
-
-
-#connect() starts a pool
 class PooledConnection:
 
     def __init__(self, db):
         self.db = db
-        self.pool = self.make_pool()  # ?
-
-    #TODO introduce getval only from sync greenlet
 
     def __getattr__(self, item):
         if conn := connection_var.get():
-            (conn, _) = conn
             return getattr(conn, item)
         raise AttributeError
 
     @exempt
-    async def make_pool(self):
+    async def start_pool(self):
         conn_params = self.db.get_connection_params()
         conninfo = make_conninfo(**conn_params)
         pool = psycopg_pool.AsyncConnectionPool(conninfo, open=False,
                                                 configure=self.configure_connection)
         await pool.open()
-        return pool
+        self.pool = pool
 
     @exempt_cm
     @asynccontextmanager

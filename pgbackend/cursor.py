@@ -1,14 +1,13 @@
 import functools
-from contextlib import contextmanager
+from contextvars import ContextVar
 
-import greenhack
+from django.db import NotSupportedError
+from django.db.backends import utils
 from greenhack import exempt
 from psycopg import sql
 
-from django.db.backends import utils
-from django.db import NotSupportedError
 
-from . import connection
+cursor_var = ContextVar('cursor', default=None)
 
 
 class CursorWrapper:

@@ -1,42 +1,53 @@
-from django.core.exceptions import EmptyResultSet
-from django.db.models.sql.constants import MULTI, GET_ITERATOR_CHUNK_SIZE, NO_RESULTS, SINGLE, CURSOR
-from greenhack import exempt
+import typing
+
+from cm_decor import cm
+from django.db.backends.mysql import compiler
+from django.db.models.sql.constants import MULTI, CURSOR
 
 
+class Cursor(typing.NamedTuple):
+    rowcount: int
+    # lastrowid: str
+    # description: tuple
 
-class C:
+    def __enter__(self):
+        return self
 
-    async def execute_sql(self, *, result_type, cursor):
-        result_type = result_type or NO_RESULTS
-        try:
-            sql, params = self.as_sql()
-            if not sql:
-                raise EmptyResultSet
-        except EmptyResultSet:
-            if result_type == MULTI:
-                return iter([])
-            else:
-                return
-        await cursor.execute(sql, params)
+    def __exit__(self, *exc_info):
+        pass
 
-        if result_type == CURSOR:
-            # Give the caller the cursor to process and close.
-            return clone(cursor)
-        if result_type == SINGLE:
-            val = await cursor.fetchone()
-            if val:
-                return val[0: self.col_count]
-            return val
-        if result_type == NO_RESULTS:
-            return
+    @classmethod
+    def clone(cls, cursor):
+        return cls(rowcount=cursor.rowcount) #, lastrowid=cursor.lastrowid)
 
-        result = await cursor.fetchall()
-        return (result,)
 
-    def execute_sql(
-        self, result_type=MULTI, chunked_fetch=False, chunk_size=None,
-        execute_sql=execute_sql,
-    ):
+class ExecuteSql:
+
+    @cm
+    def execute_sql(self, *args, cm=None, **kwargs):
+        cm.enter_context(self.connection.cursor())
+        return super().execute_sql(*args, **kwargs)
+
+
+class SQLCompiler(ExecuteSql, compiler.SQLCompiler):
+
+    def execute_sql(self, result_type=MULTI, chunked_fetch=False, chunk_size=None):
         assert not chunked_fetch
-        with self.connection.cursor() as cursor:
-            return execute_sql(self, result_type=result_type, cursor=cursor)
+        result = super().execute_sql(result_type=result_type)
+        if result_type == CURSOR:
+            return Cursor.clone(result)
+        return result
+
+
+class SQLInsertCompiler(ExecuteSql, compiler.SQLInsertCompiler):# , CursorWrapper, utils.CursorWrapper):
+    pass
+
+
+class SQLDeleteCompiler(ExecuteSql, compiler.SQLDeleteCompiler):# , CursorWrapper, utils.CursorWrapper):
+    pass
+
+# FIXME FIXME
+"""
+from kitchen.models import *; print(Order.objects.all().delete())
+(-1, {'kitchen.Order': -1})
+"""
