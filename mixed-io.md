@@ -1,19 +1,20 @@
-Mixed I/O
+**Mixed I/O**
 
 This writing describes an alternative approach to writing async code: the 
 mixed I/O. "Mixed" - because you mix "synchronous" and asynchronous 
-code. With the traditional approach, that is not possible: you have to use 
+code. With the traditional approach, it is not possible: you have to use 
 async/await all 
 the way down. However, you can use greenlets to remove this limitation.
 
-One of the things that greenlet lets you do is to wrap an async function with a 
-regular, non-async one. I will dwell on the implementation later. But what 
-you can get from this is the compatibility between sync and async code.
+With greenlet, you can wrap an async function with a 
+regular function. I will dwell on the implementation later. But that lets 
+you achieve some compatibility between sync and async code.
 
-With the traditional approach, sync and async code is not compatible: if you
+Normally, sync and async code is not compatible: if you
 need to support both sync and async I/O, you have to write two separate libraries.
-Using greenlet can solve this. In fact, you 
-can have the same code using async or blocking I/O, depending on a setting. 
+greenlet can solve this. In fact, you 
+can have the same code, being able to use async or blocking I/O, depending on a 
+setting. 
 This sounds like gevent. However, I want to propose a different variation on 
 that, that doesn't involve monkey patching.
 
@@ -39,12 +40,11 @@ def food_delivery(request):
 ```
 
 Here we have a django view that saves an order to the database, then makes a 
-request to a service and notifies the customer by websocket about the result.
+request to a service, and then notifies the customer by websocket.
 Despite not having async/await keywords, this is async code. myhttpx is a 
-wrapper over the async httpx client. The async database backend is used that 
-uses psycopg3. It 
-is a 
-working example, you can test it yourself.
+wrapper over the httpx client (async). The database driver is psycopg3 (async).
+It is a working example, you can test it using the instructions from the
+[README](https://github.com/Bi-Coloured-Python-Rock-Snake/pgbackend).
 
 The implementation is provided by
 [greenhack](https://github.com/Bi-Coloured-Python-Rock-Snake/greenhack).
