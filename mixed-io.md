@@ -46,8 +46,7 @@ uses psycopg3. It
 is a 
 working example, you can test it yourself.
 
-The implementation is provided by [greenhack](https://github.
-com/Bi-Coloured-Python-Rock-Snake/greenhack).
+The implementation is provided by [greenhack](https://github.com/Bi-Coloured-Python-Rock-Snake/greenhack)
 
 A few words on the implementation of greenlet: it is really a hack. It is 
 not a part of any standard library or runtime (like POSIX). It manipulates the 
@@ -58,8 +57,8 @@ in C/C++ space.
 
 Speaking about Python: besides greenlet, there is another implementation 
 from PyPy. The latter is more minimalistic and probably suits the needs of 
-`greenhack` better. However, greenlet is far more widely used and tested (by 
-gevent, mainly).
+greenhack better. However, greenlet is far more widely used and tested - by 
+gevent, mainly.
 
 Mixed I/O is a new approach to writing async code, but currently its best 
 feature is that it can make django async! You take vanilla django, specify 
