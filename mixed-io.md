@@ -14,11 +14,10 @@ you achieve some compatibility between sync and async code.
 
 Normally, sync and async code are not compatible: if you
 need to support both sync and async I/O, you have to write two separate libraries.
-greenlet can solve this. In fact, you 
+greenlet can solve this. You 
 can have the same code, being able to use async or blocking I/O, depending on a 
 setting. 
-This sounds like gevent. However, I want to propose a different variation on 
-that, that doesn't involve monkey patching.
+This sounds like gevent. However, it doesn't involve monkey patching.
 
 A code example
 
