@@ -2,11 +2,11 @@
 
 This describes an alternative approach to writing async code: mixed I/O.
 "Mixed" - because you mix "synchronous" and asynchronous 
-code. With the traditional approach, it is not possible: you have to use 
+code. With the traditional approach, this is not possible: you have to use 
 async/await all 
 the way down.
 
-However, you can use greenlets to remove this limitation.
+It uses greenlets.
 With greenlet, you can wrap an async function with a 
 regular function. I will dwell on the implementation later. But it lets 
 you achieve some compatibility between sync and async code.
