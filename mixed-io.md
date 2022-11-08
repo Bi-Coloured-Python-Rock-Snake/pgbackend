@@ -63,7 +63,7 @@ org/wiki/Coroutine#C)
 in C/C++ space.
 
 Speaking about Python: besides greenlet, there is another implementation 
-from PyPy. The latter is more minimalistic and probably suits the needs of 
+by PyPy. The latter is more minimalistic and probably suits the needs of 
 greenhack better. However, greenlet is far more widely used and tested - by 
 gevent, mainly.
 
