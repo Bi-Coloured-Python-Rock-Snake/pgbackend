@@ -41,10 +41,14 @@ def food_delivery(request):
 
 Here we have a django view that saves an order to the database, then makes a 
 request to a service, and then notifies the customer by websocket.
-Despite not having async/await keywords, this is async code. myhttpx is a 
-wrapper over the httpx client (async). The database driver is psycopg3 (async).
-It is a working example, you can test it using the instructions from the
-[README](https://github.com/Bi-Coloured-Python-Rock-Snake/pgbackend).
+Despite not having async/await keywords, this is async code:
+
+- The database backend is provided by this repo
+- myhttpx is a wrapper over the httpx client (async)
+- websocket notification is of course asynchronous too
+
+It is a working code, you can test it using these
+[instructions](https://github.com/Bi-Coloured-Python-Rock-Snake/pgbackend).
 
 The implementation is provided by
 [greenhack](https://github.com/Bi-Coloured-Python-Rock-Snake/greenhack).
