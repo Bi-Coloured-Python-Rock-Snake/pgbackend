@@ -93,11 +93,11 @@ standard library, which is no good.
 
 Sqlalchemy is close in terms of the implementation. It also uses greenlet to 
 bridge sync code to the async one, which lets it reuse the same codebase for 
-its async API. However, it remains an implementation detail, no 
-more. It is not visible outside: sqlalchemy provides an asynchronous API, in 
-addition to the synchronous one, 
-like any other async library would. This differs from the "mixed i/o" 
-approach, when I can consume the same django API, only with the async I/O 
+its async API. However, it remains an implementation detail, it is not 
+visible outside. Sqlalchemy provides an asynchronous API, in 
+addition to its synchronous one, 
+just like any other async library would. This differs from the "mixed i/o" 
+approach, where I can consume the same django API, only with the async I/O 
 this time.
 
 
