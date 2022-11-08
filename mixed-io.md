@@ -40,8 +40,8 @@ def food_delivery(request):
             kitchen_error(resp)
 ```
 
-Here we have a django view that saves an order to the database, then makes a 
-request to a service, and then notifies the customer by websocket.
+Here we have a django view. It saves an order to the database, then makes a 
+request to a service, then notifies the customer by websocket.
 Despite not having async/await keywords, this is async code:
 
 - The database backend is provided by this repo
