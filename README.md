@@ -10,7 +10,7 @@ The backend is intended to be used with the
 approach. 
 
 [kitchen](https://github.com/Bi-Coloured-Python-Rock-Snake/pgbackend/tree/main/kitchen)
-is a simple django app *for testing* it.
+is a simple django app *for testing*.
 
 How to test kitchen:
 
