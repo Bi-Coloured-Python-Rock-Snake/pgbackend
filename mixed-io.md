@@ -58,8 +58,8 @@ not a part of any standard library or runtime (like POSIX). It manipulates the
 stack 
 pointer using inline assembly, thus being not portable between CPU 
 architectures.
-However, the approach is quite often [used](https://en.wikipedia.
-org/wiki/Coroutine#C)
+However, the approach is quite often
+[used](https://en.wikipedia.org/wiki/Coroutine#C)
 in C/C++ space.
 
 Speaking about Python: besides greenlet, there is another implementation, 
