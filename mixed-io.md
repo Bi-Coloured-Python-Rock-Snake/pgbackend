@@ -65,8 +65,33 @@ from PyPy. The latter is more minimalistic and probably suits the needs of
 greenhack better. However, greenlet is far more widely used and tested - by 
 gevent, mainly.
 
-Mixed I/O is a new approach to writing async code, but currently its best 
-feature is that it can make django async! You take vanilla django, specify 
-an async backend in the settings, and it just works.
+**Applied to django**
 
-rough comparison greenlet use
+Mixed I/O is a new approach to writing async code, but currently its best 
+feature has been that it can make django async. You take vanilla django, 
+specify an async backend in the settings, and it just works.
+
+This is actually the repository of the async database backend for postgresql, 
+the 
+rest of the code just serving testing purposes.
+
+**Prior art: gevent and sqlalchemy**
+
+I haven't seen the described approach (mixed i/o) being used anywhere. Here 
+I will compare it with other uses of greenlet I am aware of.
+
+Gevent is the closest in terms of approach. However, it uses greenlet to 
+implement the concurrency, whereas "mixed i/o" - just as a bridge 
+between the sync and async code. And it monkeypatches the 
+standard library, which is no good.
+
+Sqlalchemy is close in terms of implementation. It also uses greenlet to 
+bridge sync code to the async one, which lets it reuse the same codebase for 
+its async API. However, it remains an implementation detail, no 
+more. It is not visible outside: sqlalchemy provides an asynchronous API, in 
+addition to the synchronous one, 
+like any other async library would. This differs from the "mixed i/o" 
+approach, when I can consume the same django API, only with the async I/O 
+this time.
+
+
