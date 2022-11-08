@@ -62,7 +62,7 @@ However, the approach is quite often
 in C/C++ space.
 
 Speaking about Python: besides greenlet, there is another implementation, 
-by PyPy. It is more minimalistic and probably suits the needs of 
+from PyPy. It is more minimalistic and probably suits the needs of 
 greenhack better. However, greenlet is far more widely used and tested - by 
 gevent, mainly.
 
