@@ -61,12 +61,13 @@ However, the approach is quite often
 [used](https://en.wikipedia.org/wiki/Coroutine#C)
 in C/C++ space.
 
-Speaking about Python: besides greenlet, there is another
-[implementation](https://doc.pypy.org/en/latest/stackless.html)
+Speaking about Python: besides greenlet, there is
+[another]((https://doc.pypy.org/en/latest/stackless.html))
+implementation
 , from PyPy.
-It is more minimalistic and probably suits the needs of 
-greenhack better. As I understand, it is used within PyPy, and thus is also 
-tested well enough. So theoretically, a transition to the PyPy 
+It is more minimalistic and probably fits better. As I understand, it is used 
+within PyPy, so is tested well enough too. So theoretically, a transition to 
+the PyPy 
 implementation is possible.
 
 **Applied to django**
