@@ -84,7 +84,7 @@ rest of the code just serving testing purposes.
 **Prior art: gevent and sqlalchemy**
 
 I haven't seen the described approach being used anywhere. Here 
-I will compare it to the other uses of greenlet I am aware of.
+I will compare it to the uses of greenlet I am aware of.
 
 Gevent is the closest in terms of the approach. However, it uses greenlet to 
 implement the concurrency in general. Whereas "mixed i/o" uses it just as a 
