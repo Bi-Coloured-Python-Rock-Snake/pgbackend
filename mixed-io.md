@@ -61,8 +61,9 @@ However, the approach is quite often
 [used](https://en.wikipedia.org/wiki/Coroutine#C)
 in C/C++ space.
 
-Speaking about Python: besides greenlet, there is another [implementation]
-(https://doc.pypy.org/en/latest/stackless.html), from PyPy.
+Speaking about Python: besides greenlet, there is another
+[implementation](https://doc.pypy.org/en/latest/stackless.html)
+, from PyPy.
 It is more minimalistic and probably suits the needs of 
 greenhack better. However, greenlet is far more widely used and tested - by 
 gevent, mainly.
