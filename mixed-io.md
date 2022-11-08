@@ -46,9 +46,8 @@ uses psycopg3. It
 is a 
 working example, you can test it yourself.
 
-The implementation is provided by [greenhack](https://github.com/Bi-Coloured-Python-Rock-Snake/greenhack)
-
-A few words on the implementation of greenlet: it is really a hack. It is 
+The implementation is provided by [greenhack](https://github.
+com/Bi-Coloured-Python-Rock-Snake/greenhack). A few words about it: greenlet is really a hack. It is 
 not a part of any standard library or runtime (like POSIX). It manipulates the 
 stack 
 pointer using inline assembly, thus being specific to a CPU architecture.
