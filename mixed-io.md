@@ -44,8 +44,8 @@ Here we have a django view. It saves an order to the database, then makes a
 request to a service, then notifies the customer by websocket.
 Despite not having async/await keywords, this is async code:
 
-- The database backend is provided by this repo
-- myhttpx is a wrapper over the httpx client (async)
+- it uses async database driver (psycopg3)
+- myhttpx is a wrapper over the (async) httpx client
 - websocket notification is of course asynchronous too
 
 It is a working code, you can test it using these
