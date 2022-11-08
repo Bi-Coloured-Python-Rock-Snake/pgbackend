@@ -73,7 +73,7 @@ Mixed I/O is a new approach to writing async code in general. However,
 currently 
 its best 
 feature has been that it can make django async. You take vanilla django, 
-specify an async backend in the settings, and it just works. And you can use 
+specify an async backend in `settings.py`, and it just works. And you can use 
 websocket connections too, finally!
 
 This repository actually implements the async database backend for django
