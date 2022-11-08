@@ -1,6 +1,5 @@
 import typing
 
-from cm_decor import cm
 from django.db.models.sql import compiler
 from django.db.models.sql.constants import MULTI, CURSOR
 
@@ -23,22 +22,20 @@ class Cursor(typing.NamedTuple):
 
 class ExecuteSql:
 
-    @cm
-    def execute_sql(self, *args, cm=None, **kwargs):
-        cm.enter_context(self.connection.cursor())
-        return super().execute_sql(*args, **kwargs)
+    def execute_sql(self, *args, **kwargs):
+        with self.connection.cursor():
+            return super().execute_sql(*args, **kwargs)
 
 
 class SQLCompiler(compiler.SQLCompiler):
 
-    @cm
-    def execute_sql(self, result_type=MULTI, chunked_fetch=False, chunk_size=None, *, cm):
+    def execute_sql(self, result_type=MULTI, chunked_fetch=False, chunk_size=None):
         assert not chunked_fetch
-        cm.enter_context(self.connection.cursor())
-        result = super().execute_sql(result_type=result_type)
-        if result_type == CURSOR:
-            return Cursor.clone(result)
-        return result
+        with self.connection.cursor():
+            result = super().execute_sql(result_type=result_type)
+            if result_type == CURSOR:
+                return Cursor.clone(result)
+            return result
 
 
 class SQLInsertCompiler(ExecuteSql, compiler.SQLInsertCompiler):
