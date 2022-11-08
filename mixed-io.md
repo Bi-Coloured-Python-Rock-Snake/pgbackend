@@ -51,8 +51,9 @@ Despite not having async/await keywords, this is async code:
 It is a working code, you can test it using these
 [instructions](https://github.com/Bi-Coloured-Python-Rock-Snake/pgbackend).
 
-The implementation is provided by
+The general implementation is provided by
 [greenhack](https://github.com/Bi-Coloured-Python-Rock-Snake/greenhack).
+
 A few words about it: greenlet is really a hack. It is 
 not a part of any standard library or runtime (like POSIX). It manipulates the 
 stack 
