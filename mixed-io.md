@@ -77,9 +77,9 @@ specify an async backend in `settings.py`, and it just works. And you can use
 websocket connections too, finally!
 
 This repository actually implements the async database backend for django
-(for postgresql),
-the 
-rest of the code just serving testing purposes.
+(for postgresql).
+The 
+rest of the code just serves testing purposes.
 
 **Prior art: gevent and sqlalchemy**
 
