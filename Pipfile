@@ -7,9 +7,10 @@ name = "pypi"
 httpx = "*"
 channels = "*"
 uvicorn = {extras = ["standard"], version = "*"}
-django = {file = "https://github.com/apollo13/django/archive/psycopg3.zip"}
+django = {file = "https://github.com/apollo13/django/archive/refs/heads/psycopg3.zip"}
 pgbackend = {editable = true, path = "."}
-cm-decor = {editable = true, path = "/home/pwtail/sof/ct_decor"}
+cm-decor = "*"
+psycopg = {extras = ["pool"], version = "*"}
 
 [dev-packages]
 
