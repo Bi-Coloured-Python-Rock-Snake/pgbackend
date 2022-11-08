@@ -46,7 +46,7 @@ Despite not having async/await keywords, this is async code:
 - websocket notification is of course asynchronous too
 
 It is a working code, you can follow instructions from
-[README](https://github.com/Bi-Coloured-Python-Rock-Snake/pgbackend)
+[README](https://github.com/Bi-Coloured-Python-Rock-Snake/pgbackend),
 if you want to test it.
 
 The general implementation is provided by
