@@ -91,13 +91,14 @@ implement the concurrency in general. Whereas "mixed i/o" uses it just as a
 bridge between the sync and async code. And gevent monkeypatches the 
 standard library, which is no good.
 
-Sqlalchemy is close in terms of the implementation. It also uses greenlet to 
-bridge sync code to the async one, which lets it reuse the same codebase for 
-its async API. However, it remains an implementation detail, it is not 
+Sqlalchemy is close in terms of the implementation. It also uses greenlet as
+a bridge from sync to async, which lets it reuse the same codebase 
+for 
+its async API. However, it remains an implementation detail in sqlalchemy, 
+it is not 
 visible outside. Sqlalchemy provides an asynchronous API, in 
 addition to its synchronous one, 
 just like any other async library would. This differs from the "mixed i/o" 
-approach, where I can consume the same django API, only with the async I/O 
-this time.
+approach, where I can consume the same django API, only in a non-blocking way.
 
 
