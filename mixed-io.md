@@ -65,8 +65,9 @@ Speaking about Python: besides greenlet, there is another
 [implementation](https://doc.pypy.org/en/latest/stackless.html)
 , from PyPy.
 It is more minimalistic and probably suits the needs of 
-greenhack better. However, greenlet is far more widely used and tested - by 
-gevent, mainly.
+greenhack better. As I understand, it is used within PyPy, and thus is also 
+tested well enough. So theoretically, a transition to the PyPy 
+implementation is possible.
 
 **Applied to django**
 
