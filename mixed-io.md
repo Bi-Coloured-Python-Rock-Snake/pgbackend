@@ -25,8 +25,6 @@ from kitchen.models import Order
 
 @as_async
 def food_delivery(request):
-    if request.GET:
-        request.POST = request.GET
     order: Order = prepare_order(request)
     order.save()
     resp = myhttpx.post(settings.KITCHEN_SERVICE, data=order.as_dict())
