@@ -8,9 +8,8 @@ the way down.
 
 It uses greenlets.
 With greenlet, you can wrap an async function with a 
-regular function. I will dwell on the implementation later. But what it 
-gives you is, 
-you achieve some compatibility between sync and async code.
+regular function. It lets to achieve some compatibility between sync and 
+async code.
 
 Normally, sync and async code are not compatible: if you
 need to support both sync and async I/O, you have to write two separate libraries.
