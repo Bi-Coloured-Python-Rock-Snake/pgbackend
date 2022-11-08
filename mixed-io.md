@@ -12,7 +12,7 @@ regular function. I will dwell on the implementation later. But what it
 gives you is, 
 you achieve some compatibility between sync and async code.
 
-Normally, sync and async code is not compatible: if you
+Normally, sync and async code are not compatible: if you
 need to support both sync and async I/O, you have to write two separate libraries.
 greenlet can solve this. In fact, you 
 can have the same code, being able to use async or blocking I/O, depending on a 
