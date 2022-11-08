@@ -86,12 +86,12 @@ rest of the code just serving testing purposes.
 I haven't seen the described approach being used anywhere. Here 
 I will compare it to the other uses of greenlet I am aware of.
 
-Gevent is the closest in terms of approach. However, it uses greenlet to 
+Gevent is the closest in terms of the approach. However, it uses greenlet to 
 implement the concurrency, whereas "mixed i/o" - just as a bridge 
 between the sync and async code. And it monkeypatches the 
 standard library, which is no good.
 
-Sqlalchemy is close in terms of implementation. It also uses greenlet to 
+Sqlalchemy is close in terms of the implementation. It also uses greenlet to 
 bridge sync code to the async one, which lets it reuse the same codebase for 
 its async API. However, it remains an implementation detail, no 
 more. It is not visible outside: sqlalchemy provides an asynchronous API, in 
