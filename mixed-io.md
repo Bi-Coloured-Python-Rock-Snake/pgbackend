@@ -69,11 +69,15 @@ gevent, mainly.
 
 **Applied to django**
 
-Mixed I/O is a new approach to writing async code, but currently its best 
+Mixed I/O is a new approach to writing async code in general. However, 
+currently 
+its best 
 feature has been that it can make django async. You take vanilla django, 
-specify an async backend in the settings, and it just works.
+specify an async backend in the settings, and it just works. And you can use 
+websocket connections too, finally!
 
-This is actually the repository of the async database backend for postgresql, 
+This repository actually implements the async database backend for django
+(for postgresql),
 the 
 rest of the code just serving testing purposes.
 
