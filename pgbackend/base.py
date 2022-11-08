@@ -13,9 +13,9 @@ class DatabaseWrapper(DatabaseWrapper):
         self.connection = PooledConnection(db=self)
         self.connection.start_pool()
 
-    def get_new_connection(self, conn_params):
-        raise NotImplementedError
-        return PooledConnection(db=self)
+    def connect(self):
+        # is not called
+        assert False
 
     def make_debug_cursor(self, cursor):
         return cursor

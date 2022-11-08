@@ -15,6 +15,9 @@ class Cursor(typing.NamedTuple):
     def __exit__(self, *exc_info):
         pass
 
+    def close(self):
+        pass
+
     @classmethod
     def clone(cls, cursor):
         return cls(rowcount=cursor.rowcount) #, lastrowid=cursor.lastrowid)
@@ -39,6 +42,10 @@ class SQLCompiler(compiler.SQLCompiler):
 
 
 class SQLInsertCompiler(ExecuteSql, compiler.SQLInsertCompiler):
+    pass
+
+
+class SQLUpdateCompiler(compiler.SQLUpdateCompiler, SQLCompiler):
     pass
 
 

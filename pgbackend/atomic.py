@@ -1,4 +1,4 @@
-from contextlib import contextmanager, asynccontextmanager
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from functools import cached_property
 
