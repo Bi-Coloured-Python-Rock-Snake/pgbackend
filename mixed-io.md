@@ -57,9 +57,9 @@ The general implementation is provided by
 A few words about it: greenlet is really a hack. It is 
 not a part of any standard library or runtime (like POSIX). It manipulates the 
 stack 
-pointer using inline assembly, thus being specific to a CPU architecture.
-However, this approach is quite often
-[used](https://en.wikipedia.org/wiki/Coroutine#C)
+pointer using inline assembly, thus being not portable between CPU 
+architectures.
+However, the approach is quite [used](https://en.wikipedia.org/wiki/Coroutine#C)
 in C/C++ space.
 
 Speaking about Python: besides greenlet, there is another implementation 
