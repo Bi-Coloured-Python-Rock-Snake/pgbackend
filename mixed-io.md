@@ -87,8 +87,8 @@ I haven't seen the described approach being used anywhere. Here
 I will compare it to the other uses of greenlet I am aware of.
 
 Gevent is the closest in terms of the approach. However, it uses greenlet to 
-implement the concurrency, whereas "mixed i/o" - just as a bridge 
-between the sync and async code. And it monkeypatches the 
+implement the concurrency in general. Whereas "mixed i/o" uses it just as a 
+bridge between the sync and async code. And gevent monkeypatches the 
 standard library, which is no good.
 
 Sqlalchemy is close in terms of the implementation. It also uses greenlet to 
