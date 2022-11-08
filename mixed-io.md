@@ -50,7 +50,7 @@ It is a working code, you can test it using these
 
 The general implementation is provided by
 [greenhack](https://github.com/Bi-Coloured-Python-Rock-Snake/greenhack), which
-is in turn based on greenlet.
+in turn is based on greenlet.
 
 A few words about it: greenlet is really a hack. It is 
 not a part of any standard library or runtime (like POSIX). It manipulates the 
