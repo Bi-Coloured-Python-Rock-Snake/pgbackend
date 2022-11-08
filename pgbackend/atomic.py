@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager
 from dataclasses import dataclass
 from functools import cached_property
 
@@ -22,18 +22,15 @@ class Atomic:
     def __exit__(self):
         return self._cm.__exit__
 
+    @cached_property
     @exempt_cm
-    def _cm(self):
+    @asynccontextmanager
+    async def _cm(self):
         db = connections[self.using]
         pool = db.connection.pool
-        return pool.connection()
-
-    @cached_property
-    @contextmanager
-    def _cm(self, _cm=_cm):
-        with _cm(self) as conn:
-            connection_var.set(conn)
-            try:
-                yield
-            finally:
-                connection_var.set(None)
+        try:
+            async with pool.connection() as conn:
+                connection_var.set(conn)
+                yield conn
+        finally:
+            connection_var.set(None)

@@ -58,10 +58,10 @@
         },
         "cm-decor": {
             "hashes": [
-                "sha256:0daee44bc2686cda8def2af6eedea88af035af9c7ebe567a7ba0cece85d34326"
+                "sha256:c5ddc5f55c3ee2392e7975f13f9a24c908b1397a3baaeea30ea2b04678a2bf36"
             ],
             "index": "pypi",
-            "version": "==0.1.2"
+            "version": "==0.1.3"
         },
         "django": {
             "file": "https://github.com/apollo13/django/archive/refs/heads/psycopg3.zip",
@@ -72,9 +72,9 @@
         },
         "greenhack": {
             "hashes": [
-                "sha256:852dd3a3c736a526585c2bad6db4c52d444a5c336474a0d63af024c71e30b0f1"
+                "sha256:5afd01869f3a62d8a71ccceb28063db0379e7bc81aaf5bfba3b1501352dfd6a0"
             ],
-            "version": "==0.1.6"
+            "version": "==0.1.7"
         },
         "greenlet": {
             "hashes": [

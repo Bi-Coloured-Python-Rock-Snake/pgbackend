@@ -1,13 +1,12 @@
 import functools
-from contextvars import ContextVar
 
 from django.db import NotSupportedError
 from django.db.backends import utils
-from greenhack import exempt
+from greenhack import exempt, CtxVar
 from psycopg import sql
 
 
-cursor_var = ContextVar('cursor', default=None)
+cursor_var = CtxVar(__name__, 'cursor', default=None)
 
 
 class CursorWrapper:
