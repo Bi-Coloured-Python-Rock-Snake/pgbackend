@@ -5,14 +5,14 @@ import psycopg_pool
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.backends.postgresql import base
-from greenhack import exempt, exempt_cm, CtxVar
+from greenhack import exempt, exempt_cm, context_var
 from psycopg import IsolationLevel
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
 
 from pgbackend.cursor import CursorDebugWrapper, CursorWrapper, cursor_var
 
-connection_var = CtxVar(__name__, 'connection', default=None)
+connection_var = context_var(__name__, 'connection', default=None)
 
 
 class PooledConnection:
@@ -79,12 +79,10 @@ class PooledConnection:
         return cursor_cm(self)
 
     def make_cursor(self, cursor):
-        return CursorDebugWrapper(cursor, self.db)
-
-    def make_cursor(self, cursor, make_debug_cursor=make_cursor):
         if self.db.queries_logged:
-            return make_debug_cursor(self, cursor)
-        return CursorWrapper(cursor, self.db)
+            return CursorDebugWrapper(cursor, self.db)
+        else:
+            return CursorWrapper(cursor, self.db)
 
     @cached_property
     def adapters(self):

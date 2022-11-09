@@ -2,11 +2,10 @@ import functools
 
 from django.db import NotSupportedError
 from django.db.backends import utils
-from greenhack import exempt, CtxVar
+from greenhack import exempt, context_var, exempt_it
 from psycopg import sql
 
-
-cursor_var = CtxVar(__name__, 'cursor', default=None)
+cursor_var = context_var(__name__, 'cursor', default=None)
 
 
 class CursorWrapper:
@@ -24,10 +23,9 @@ class CursorWrapper:
         else:
             return cursor_attr
 
+    @property
     def __iter__(self):
-        raise NotImplementedError
-        # with self.db.wrap_database_errors:
-        #     yield from self.cursor
+        return exempt_it(self.cursor.__aiter__)
 
     def __enter__(self):
         return self
