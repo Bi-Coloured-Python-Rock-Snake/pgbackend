@@ -14,7 +14,6 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.conf import settings
 
-# Create your views here.
 
 @as_async
 def food_delivery(request):

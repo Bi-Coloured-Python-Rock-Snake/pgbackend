@@ -16,6 +16,7 @@ connection_var = context_var(__name__, 'connection', default=None)
 
 
 class PooledConnection:
+    pool = None
 
     def __init__(self, db):
         self.db = db
@@ -48,6 +49,8 @@ class PooledConnection:
         if existing_conn := connection_var.get():
             cm = nullcontext(existing_conn)
         else:
+            if self.pool is None:
+                self.start_pool()
             cm = get_conn(self)
         with cm as conn:
             try:

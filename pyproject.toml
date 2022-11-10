@@ -1,3 +1,20 @@
+[tool.poetry]
+name = "pgbackend"
+version = "0.1.0"
+description = ""
+authors = ["pwtail <abvit89s@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+httpx = "^0.23.0"
+channels = "^4.0.0"
+uvicorn = {extras = ["standard"], version = "^0.19.0"}
+psycopg = {extras = ["pool"], version = "^3.1.4"}
+django = {url = "https://github.com/apollo13/django/archive/psycopg3.zip"}
+greenhack = "^0.1.14"
+
+
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta:__legacy__"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
