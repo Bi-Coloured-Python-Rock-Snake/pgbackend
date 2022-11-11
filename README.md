@@ -15,7 +15,7 @@ is a simple django app *for testing*.
 How to test kitchen:
 
 ```commandline
-pipenv install
+poetry install
 ```
 
 Then run the ASGI application:
