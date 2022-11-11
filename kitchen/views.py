@@ -2,17 +2,14 @@ import random
 from os.path import dirname
 from pathlib import Path
 
-from django.shortcuts import render
+from django.conf import settings
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from greenhack import as_async
 
 import myhttpx
-from kitchen.models import Order, prepare_order
 from kitchen import ws
-
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-
-from django.conf import settings
+from kitchen.models import Order, prepare_order
 
 
 @as_async
