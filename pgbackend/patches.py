@@ -5,13 +5,14 @@ import pgbackend.base
 from pgbackend import atomic
 
 
-def __new__(cls, using, *args, **kwargs):
+def __new__(cls, using, *args, __new__=Atomic.__new__,
+            **kwargs):
     db = connections[using]
     match db:
         case pgbackend.base.DatabaseWrapper():
             return atomic.Atomic(using, *args, **kwargs)
         case _:
-            return Atomic.__new__(Atomic, using, *args, **kwargs)
+            return __new__(Atomic)
 
 
 Atomic.__new__ = __new__
