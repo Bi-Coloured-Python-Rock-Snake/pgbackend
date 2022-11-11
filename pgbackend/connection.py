@@ -40,6 +40,13 @@ class PooledConnection:
         assert (conn := connection_var.get())
         return exempt(conn.commit)
 
+    @property
+    def rollback(self):
+        assert (conn := connection_var.get())
+        return exempt(conn.rollback)
+
+    #TODO add transaction method too?
+
     @exempt_cm
     def get_conn(self):
         return self.pool.connection()
