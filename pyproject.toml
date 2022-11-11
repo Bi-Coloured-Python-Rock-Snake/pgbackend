@@ -1,9 +1,12 @@
 [tool.poetry]
 name = "pgbackend"
 version = "0.1.0"
-description = ""
+description = "Django database backend for psycopg3"
 authors = ["pwtail <abvit89s@gmail.com>"]
 readme = "README.md"
+packages = [
+    { include = "pgbackend" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
