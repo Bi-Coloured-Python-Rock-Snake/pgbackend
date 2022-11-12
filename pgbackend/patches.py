@@ -2,7 +2,7 @@ from django.db import connections
 from django.db.transaction import Atomic
 
 import pgbackend.base
-from pgbackend import atomic
+import pgbackend.atomic
 
 
 def __new__(cls, using, *args, __new__=Atomic.__new__,
@@ -10,7 +10,7 @@ def __new__(cls, using, *args, __new__=Atomic.__new__,
     db = connections[using]
     match db:
         case pgbackend.base.DatabaseWrapper():
-            return atomic.Atomic(using, *args, **kwargs)
+            return pgbackend.atomic.Atomic(using, *args, **kwargs)
         case _:
             return __new__(Atomic)
 
