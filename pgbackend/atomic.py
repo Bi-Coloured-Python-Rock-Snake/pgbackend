@@ -1,11 +1,7 @@
-from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from functools import cached_property
 
 from django.db import connections
-from greenhack import exempt_cm
-
-from pgbackend.connection import connection_var
 
 
 @dataclass
