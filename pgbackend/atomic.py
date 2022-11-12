@@ -23,14 +23,6 @@ class Atomic:
         return self._cm.__exit__
 
     @cached_property
-    @exempt_cm
-    @asynccontextmanager
-    async def _cm(self):
+    def _cm(self):
         db = connections[self.using]
-        pool = db.connection.pool
-        try:
-            async with pool.connection() as conn:
-                connection_var.set(conn)
-                yield conn
-        finally:
-            connection_var.set(None)
+        return db.connection.get_conn()
