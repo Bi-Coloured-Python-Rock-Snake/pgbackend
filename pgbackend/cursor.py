@@ -11,12 +11,12 @@ from pgbackend._nullable_cm import NullableContextManager
 cursor_var = context_var(__name__, 'cursor', default=None)
 
 
-class CursorWrapper(NullableContextManager):
+class CursorWrapper(ExemptCm):
 
-    def __init__(self, cursor, db, *, cm):
+    def __init__(self, cursor, db):
         self.cursor = cursor
         self.db = db
-        NullableContextManager.__init__(self, cm)
+        ExemptCm.__init__(self, cursor)
 
     WRAP_ERROR_ATTRS = frozenset(["fetchone", "fetchmany", "fetchall", "nextset"])
 
@@ -32,14 +32,7 @@ class CursorWrapper(NullableContextManager):
         return exempt_it(self.cursor.__aiter__)
 
     def __enter__(self):
-        self._enter_result = self
         return self
-    #
-    # def __exit__(self, type, value, traceback):
-    #     pass
-
-    # The following methods cannot be implemented in __getattr__, because the
-    # code must run when the method is invoked, not just when it is accessed.
 
     def callproc(self, name, args=None):
         if not isinstance(name, sql.Identifier):
@@ -122,11 +115,11 @@ class CursorWrapper(NullableContextManager):
     def copy(self):
         return exempt(self.cursor.copy)
 
-    # @property
-    # def close(self):
-    #     return exempt(self.cursor.close)
+    @property
+    def close(self):
+        return exempt(self.cursor.close)
 
 
 
-class CursorDebugWrapper(utils.CursorDebugWrapper, CursorWrapper, NullableContextManager, utils.CursorWrapper):
+class CursorDebugWrapper(utils.CursorDebugWrapper, CursorWrapper, utils.CursorWrapper):
     pass

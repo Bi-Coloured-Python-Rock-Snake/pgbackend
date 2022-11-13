@@ -79,20 +79,22 @@ class PooledConnection:
 
     def cursor(self, *args, **kwargs):
         with self.ensure_conn() as conn:
-            create_cursor = exempt_cm(conn.cursor)
-            cm = create_cursor(*args, **kwargs)
-            cm = nullable_cm(cm)
+            return self.make_cursor(conn)
+            # create_cursor = exempt_cm(conn.cursor)
+            # cm = create_cursor(*args, **kwargs)
+            # cm = nullable_cm(cm)
+            # with cm as cursor:
+            #     cm.pop_context()
+            #     cursor = self.make_cursor(cursor)
+            #     return cursor
 
-            with cm as cursor:
-                cm = cm.pop_context()
-                cursor = self.make_cursor(cursor, cm=cm)
-                return cursor
-
-    def make_cursor(self, cursor, *, cm):
+    @exempt
+    async def make_cursor(self, conn):
+        cursor = await conn.cursor().__aenter__()
         if self.db.queries_logged:
-            return CursorDebugWrapper(cursor, self.db, cm=cm)
+            return CursorDebugWrapper(cursor, self.db)
         else:
-            return CursorWrapper(cursor, self.db, cm=cm)
+            return CursorWrapper(cursor, self.db)
 
     @cached_property
     def adapters(self):
