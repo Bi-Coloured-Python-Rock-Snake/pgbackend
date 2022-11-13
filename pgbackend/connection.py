@@ -1,15 +1,17 @@
 from contextlib import nullcontext, contextmanager
 from functools import cached_property
+from typing import AsyncContextManager
 
 import psycopg_pool
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.backends.postgresql import base
-from greenhack import exempt, exempt_cm, context_var
+from greenhack import exempt, exempt_cm, context_var, exempt_it
 from psycopg import IsolationLevel
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
 
+from pgbackend._nullable_cm import nullable_cm
 from pgbackend.cursor import CursorDebugWrapper, CursorWrapper, cursor_var
 
 connection_var = context_var(__name__, 'connection', default=None)
@@ -47,52 +49,50 @@ class PooledConnection:
 
     #TODO add transaction method too?
 
-    @exempt_cm
-    def get_conn(self):
+    #TODO rename to get_conn
+    def get_conn_async(self) -> AsyncContextManager:
+        if self.pool is None:
+            self.start_pool()
         return self.pool.connection()
 
     @contextmanager
-    def get_conn(self, get_conn=get_conn):
-        if existing_conn := connection_var.get():
-            cm = nullcontext(existing_conn)
+    def ensure_conn(self, as_tuple=False):
+        is_created = not (existing_conn := connection_var.get())
+        if is_created:
+            get_conn = exempt_cm(self.get_conn_async)
         else:
-            if self.pool is None:
-                self.start_pool()
-            cm = get_conn(self)
-        with cm as conn:
+            get_conn = lambda: nullcontext(existing_conn)
+        with get_conn() as conn:
             try:
                 if not existing_conn:
                     connection_var.set(conn)
                 if not hasattr(conn, '_django_init'):
                     conn._django_init = 'started'
                     self.db.init_connection_state()
-                yield conn
+                if as_tuple:
+                    yield conn, is_created
+                else:
+                    yield conn
             finally:
-                if not existing_conn:
+                if is_created:
                     connection_var.set(None)
 
-    @contextmanager
-    def cursor(self):
-        with self.get_conn() as conn:
-            cursor_cm = exempt_cm(conn.cursor)
-            with cursor_cm() as cur:
-                cur = self.make_cursor(cur)
-                try:
-                    cursor_var.set(cur)
-                    yield cur
-                finally:
-                    cursor_var.set(None)
+    def cursor(self, *args, **kwargs):
+        with self.ensure_conn() as conn:
+            create_cursor = exempt_cm(conn.cursor)
+            cm = create_cursor(*args, **kwargs)
+            cm = nullable_cm(cm)
 
-    def cursor(self, cursor_cm=cursor):
-        if cur := cursor_var.get():
-            return cur
-        return cursor_cm(self)
+            with cm as cursor:
+                cm = cm.pop_context()
+                cursor = self.make_cursor(cursor, cm=cm)
+                return cursor
 
-    def make_cursor(self, cursor):
+    def make_cursor(self, cursor, *, cm):
         if self.db.queries_logged:
-            return CursorDebugWrapper(cursor, self.db)
+            return CursorDebugWrapper(cursor, self.db, cm=cm)
         else:
-            return CursorWrapper(cursor, self.db)
+            return CursorWrapper(cursor, self.db, cm=cm)
 
     @cached_property
     def adapters(self):

@@ -3,16 +3,20 @@ import functools
 from django.db import NotSupportedError
 from django.db.backends import utils
 from greenhack import exempt, context_var, exempt_it
+from greenhack.context_managers import ExemptCm
 from psycopg import sql
+
+from pgbackend._nullable_cm import NullableContextManager
 
 cursor_var = context_var(__name__, 'cursor', default=None)
 
 
-class CursorWrapper:
+class CursorWrapper(NullableContextManager):
 
-    def __init__(self, cursor, db):
+    def __init__(self, cursor, db, *, cm):
         self.cursor = cursor
         self.db = db
+        NullableContextManager.__init__(self, cm)
 
     WRAP_ERROR_ATTRS = frozenset(["fetchone", "fetchmany", "fetchall", "nextset"])
 
@@ -28,10 +32,11 @@ class CursorWrapper:
         return exempt_it(self.cursor.__aiter__)
 
     def __enter__(self):
+        self._enter_result = self
         return self
-
-    def __exit__(self, type, value, traceback):
-        pass
+    #
+    # def __exit__(self, type, value, traceback):
+    #     pass
 
     # The following methods cannot be implemented in __getattr__, because the
     # code must run when the method is invoked, not just when it is accessed.
@@ -117,9 +122,11 @@ class CursorWrapper:
     def copy(self):
         return exempt(self.cursor.copy)
 
-    def close(self):
-        pass
+    # @property
+    # def close(self):
+    #     return exempt(self.cursor.close)
 
 
-class CursorDebugWrapper(utils.CursorDebugWrapper, CursorWrapper, utils.CursorWrapper):
+
+class CursorDebugWrapper(utils.CursorDebugWrapper, CursorWrapper, NullableContextManager, utils.CursorWrapper):
     pass

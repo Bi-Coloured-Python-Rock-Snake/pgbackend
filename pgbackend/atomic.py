@@ -10,15 +10,13 @@ class Atomic:
     savepoint: bool
     durable: bool
 
-    @property
     def __enter__(self):
-        return self._cm.__enter__
+        return self._cm.__enter__()
 
-    @property
-    def __exit__(self):
-        return self._cm.__exit__
+    def __exit__(self, *exc_info):
+        return self._cm.__exit__(*exc_info)
 
     @cached_property
     def _cm(self):
         db = connections[self.using]
-        return db.connection.get_conn()
+        return db.connection.ensure_conn()

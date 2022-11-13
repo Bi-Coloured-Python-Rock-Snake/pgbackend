@@ -16,6 +16,10 @@ class DatabaseWrapper(DatabaseWrapper):
         # is not called
         assert False
 
+    @property
+    def ensure_conn(self):
+        return self.connection.ensure_conn
+
     def make_debug_cursor(self, cursor):
         return cursor
 
