@@ -1,6 +1,6 @@
 import typing
 from contextlib import nullcontext, contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from types import FunctionType
 from typing import ContextManager
 
@@ -30,21 +30,18 @@ class NullableContextManager:
     def __exit__(self, *exc_info):
         return self._cm.__exit__(*exc_info)
 
-    def pop_context(self):
+    def pop(self):
         exit = self._cm.__exit__
         del self._cm
         return TupleCm(lambda: self._enter_result, exit)
 
     def close(self):
-        with self.pop_context():
+        with self.pop():
             pass
 
 
 
 nullable_cm = NullableContextManager
-
-
-
 
 
 if __name__ == '__main__':
@@ -55,6 +52,6 @@ if __name__ == '__main__':
         print('>')
 
     with (cm := nullable_cm(make_cm())) as val:
-        with cm.pop_context():
-            1
+        cm.pop()
+        1
 
