@@ -1,18 +1,15 @@
 from contextlib import nullcontext, contextmanager, ExitStack
 from functools import cached_property
-from typing import AsyncContextManager
 
 import psycopg_pool
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.backends.postgresql import base
 from greenhack import exempt, exempt_cm, context_var
-from greenhack.context_managers import ExemptCm
 from psycopg import IsolationLevel
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
 
-from pgbackend._nullable_cm import nullable_cm
 from pgbackend.cursor import CursorDebugWrapper, CursorWrapper
 
 # connection_var = context_var(__name__, 'connection', default=None)

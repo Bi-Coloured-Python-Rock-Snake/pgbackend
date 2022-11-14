@@ -3,8 +3,6 @@ import typing
 from django.db.models.sql import compiler
 from django.db.models.sql.constants import MULTI, CURSOR, GET_ITERATOR_CHUNK_SIZE
 
-from pgbackend._nullable_cm import nullable_cm
-
 
 class Cursor(typing.NamedTuple):
     rowcount: int

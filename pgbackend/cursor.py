@@ -6,8 +6,6 @@ from greenhack import exempt, context_var, exempt_it
 from greenhack.context_managers import ExemptCm
 from psycopg import sql
 
-from pgbackend._nullable_cm import NullableContextManager
-
 cursor_var = context_var(__name__, 'cursor', default=None)
 
 
