@@ -76,21 +76,16 @@ class PooledConnection:
             return nullcontext(conn)
         return ensure_conn(self)
 
-    def cursor(self, *args, conn_created, **kwargs):
+    def cursor(self, *args, **kwargs):
         cm = var_conn_cm.get()
         assert isinstance(cm, ExitStack)
         conn = cm.conn
-        if not conn_created:
-            return self.make_cursor(conn, *args, **kwargs)
-        cm = cm.pop_all()
-        cursor = self.make_cursor(conn, *args, exit_cm=cm, **kwargs)
-        cm.push(cursor.__exit__)
+        cursor = self.make_cursor(conn, *args, **kwargs)
         return cursor
 
     def cursor(self, *args, cursor=cursor, **kwargs):
-        existed = get_connection()
         with self.ensure_conn():
-            return cursor(self, *args, conn_created=not existed, **kwargs)
+            return cursor(self, *args, **kwargs)
 
     @exempt
     async def make_cursor(self, conn, *args, exit_cm=None, **kwargs):

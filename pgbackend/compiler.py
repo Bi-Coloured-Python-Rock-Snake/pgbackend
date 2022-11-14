@@ -1,7 +1,12 @@
 import typing
+from contextlib import ExitStack
+from functools import wraps
 
 from django.db.models.sql import compiler
 from django.db.models.sql.constants import MULTI, CURSOR, GET_ITERATOR_CHUNK_SIZE
+
+from pgbackend._record_result import record_result
+from pgbackend.connection import var_conn_cm
 
 
 class Cursor(typing.NamedTuple):
@@ -30,34 +35,48 @@ class ExecuteSql:
             return super().execute_sql(*args, **kwargs)
 
 
+def extend_connection_lifetime(cursor):
+    #TODO if not transaction
+    exit = var_conn_cm.get().pop_all()
+    exit.callback(cursor.close)
+    cursor._exit_cm = exit
+
+
 class SQLCompiler(compiler.SQLCompiler):
 
     def execute_sql(
-        self, result_type=MULTI, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE
+        self, result_type=MULTI, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE,
     ):
-        result = super().execute_sql(result_type=result_type, chunked_fetch=chunked_fetch, chunk_size=chunk_size)
-        if result_type == CURSOR:
-            return Cursor.clone(result)
-        # elif chunked_fetch:
-        #     assert isinstance(result, typing.Iterator)
-        #
-        #     def cur_iter(cm=cm.pop()):
-        #         with cm:
-        #             yield from result
-        #
-        #     return cur_iter()
-        else:
-            return result
+        assert chunked_fetch
+        cursor_fn = self.connection.cursor
+        self.connection.chunked_cursor = record_result(cursor_fn, record := {})
+        try:
+            result = super().execute_sql(
+                result_type=result_type, chunked_fetch=chunked_fetch, chunk_size=chunk_size
+            )
+        finally:
+            self.connection.chunked_cursor = cursor_fn
+        assert isinstance(result, typing.Iterator)
+        cursor = record['result']
+        extend_connection_lifetime(cursor)
+        return result
 
     def execute_sql(
-            self, result_type=MULTI, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE,
-            execute_sql=execute_sql,
+        self, result_type=MULTI, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE,
+        execute_sql_chunked_fetch=execute_sql,
     ):
         with self.connection.ensure_conn():
-            return execute_sql(
-                self, result_type=result_type, chunked_fetch=chunked_fetch, chunk_size=chunk_size
-            )
-
+            if chunked_fetch:
+                result = execute_sql_chunked_fetch(
+                    self, result_type=result_type, chunked_fetch=chunked_fetch, chunk_size=chunk_size
+                )
+            else:
+                result = super().execute_sql(
+                    result_type=result_type, chunked_fetch=chunked_fetch, chunk_size=chunk_size
+                )
+            if result_type == CURSOR:
+                return Cursor.clone(result)
+            return result
 
 
 class SQLInsertCompiler(ExecuteSql, compiler.SQLInsertCompiler):
