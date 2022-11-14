@@ -11,12 +11,14 @@ from pgbackend._nullable_cm import NullableContextManager
 cursor_var = context_var(__name__, 'cursor', default=None)
 
 
-class CursorWrapper(ExemptCm):
+class CursorWrapper:
 
-    def __init__(self, cursor, db):
+    def __init__(self, cursor, db, *, exit_cm=None):
         self.cursor = cursor
         self.db = db
-        ExemptCm.__init__(self, cursor)
+        if exit_cm is None:
+            exit_cm = ExemptCm(cursor)
+        self._exit_cm = exit_cm
 
     WRAP_ERROR_ATTRS = frozenset(["fetchone", "fetchmany", "fetchall", "nextset"])
 
@@ -33,6 +35,10 @@ class CursorWrapper(ExemptCm):
 
     def __enter__(self):
         return self
+
+    @property
+    def __exit__(self):
+        return self._exit_cm.__exit__
 
     def callproc(self, name, args=None):
         if not isinstance(name, sql.Identifier):

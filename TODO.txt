@@ -2,11 +2,3 @@
 
 all decorators: leave initial (async version) too under an attr
 
-dynamic cm
-
------------------
-
-cursor.close functionality is enough
-look it up how it is done
-
-_enter_result

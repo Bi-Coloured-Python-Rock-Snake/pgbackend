@@ -1,4 +1,4 @@
-from contextlib import nullcontext, contextmanager
+from contextlib import nullcontext, contextmanager, ExitStack
 from functools import cached_property
 from typing import AsyncContextManager
 
@@ -7,13 +7,21 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.backends.postgresql import base
 from greenhack import exempt, exempt_cm, context_var
+from greenhack.context_managers import ExemptCm
 from psycopg import IsolationLevel
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
 
+from pgbackend._nullable_cm import nullable_cm
 from pgbackend.cursor import CursorDebugWrapper, CursorWrapper
 
-connection_var = context_var(__name__, 'connection', default=None)
+# connection_var = context_var(__name__, 'connection', default=None)
+var_conn_cm = context_var(__name__, 'conn_cm', default=None)
+#TODO connection_cm
+
+
+def get_connection():
+    return (cm := var_conn_cm.get()) and cm.conn
 
 
 class PooledConnection:
@@ -23,7 +31,8 @@ class PooledConnection:
         self.db = db
 
     def __getattr__(self, item):
-        if conn := connection_var.get():
+        # if conn := connection_var.get():
+        if conn := get_connection():
             return getattr(conn, item)
         raise AttributeError
 
@@ -38,62 +47,61 @@ class PooledConnection:
 
     @property
     def commit(self):
-        assert (conn := connection_var.get())
+        assert (conn := get_connection())
         return exempt(conn.commit)
 
     @property
     def rollback(self):
-        assert (conn := connection_var.get())
+        assert (conn := get_connection())
         return exempt(conn.rollback)
 
     #TODO add transaction method too?
 
-    #TODO rename to get_conn
-    def get_conn_async(self) -> AsyncContextManager:
+    @exempt_cm
+    def get_conn(self):
         if self.pool is None:
             self.start_pool()
         return self.pool.connection()
 
     @contextmanager
-    def ensure_conn(self, as_tuple=False):
-        is_created = not (existing_conn := connection_var.get())
-        if is_created:
-            get_conn = exempt_cm(self.get_conn_async)
-        else:
-            get_conn = lambda: nullcontext(existing_conn)
-        with get_conn() as conn:
-            try:
-                if not existing_conn:
-                    connection_var.set(conn)
-                if not hasattr(conn, '_django_init'):
-                    conn._django_init = 'started'
-                    self.db.init_connection_state()
-                if as_tuple:
-                    yield conn, is_created
-                else:
-                    yield conn
-            finally:
-                if is_created:
-                    connection_var.set(None)
+    def ensure_conn(self):
+        with ExitStack() as exit:
+            conn = exit.conn = exit.enter_context(self.get_conn())
+            var_conn_cm.set(exit)
+            if not hasattr(conn, '_django_init'):
+                conn._django_init = 'started'
+                self.db.init_connection_state()
+            exit.callback(lambda *exc_info: var_conn_cm.set(None))
+            yield conn
 
-    def cursor(self, *args, **kwargs):
-        with self.ensure_conn() as conn:
-            return self.make_cursor(conn)
-            # create_cursor = exempt_cm(conn.cursor)
-            # cm = create_cursor(*args, **kwargs)
-            # cm = nullable_cm(cm)
-            # with cm as cursor:
-            #     cm.pop_context()
-            #     cursor = self.make_cursor(cursor)
-            #     return cursor
+    def ensure_conn(self, ensure_conn=ensure_conn):
+        if conn := get_connection():
+            return nullcontext(conn)
+        return ensure_conn(self)
+
+    def cursor(self, *args, conn_created, **kwargs):
+        cm = var_conn_cm.get()
+        assert isinstance(cm, ExitStack)
+        conn = cm.conn
+        if not conn_created:
+            return self.make_cursor(conn, *args, **kwargs)
+        cm = cm.pop_all()
+        cursor = self.make_cursor(conn, *args, exit_cm=cm, **kwargs)
+        cm.push(cursor.__exit__)
+        return cursor
+
+    def cursor(self, *args, cursor=cursor, **kwargs):
+        existed = get_connection()
+        with self.ensure_conn():
+            return cursor(self, *args, conn_created=not existed, **kwargs)
 
     @exempt
-    async def make_cursor(self, conn):
-        cursor = await conn.cursor().__aenter__()
+    async def make_cursor(self, conn, *args, exit_cm=None, **kwargs):
+        cursor = await conn.cursor(*args, **kwargs).__aenter__()
         if self.db.queries_logged:
-            return CursorDebugWrapper(cursor, self.db)
+            return CursorDebugWrapper(cursor, self.db, exit_cm=exit_cm)
         else:
-            return CursorWrapper(cursor, self.db)
+            return CursorWrapper(cursor, self.db, exit_cm=exit_cm)
 
     @cached_property
     def adapters(self):
