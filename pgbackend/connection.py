@@ -1,3 +1,4 @@
+import typing
 from contextlib import nullcontext, contextmanager, ExitStack
 from functools import cached_property
 
@@ -6,19 +7,21 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.backends.postgresql import base
 from greenhack import exempt, exempt_cm, context_var
-from psycopg import IsolationLevel
+from psycopg import IsolationLevel, AsyncConnection
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
 
 from pgbackend.cursor import CursorDebugWrapper, CursorWrapper
 
-# connection_var = context_var(__name__, 'connection', default=None)
-var_conn_cm = context_var(__name__, 'conn_cm', default=None)
-#TODO connection_cm
+connection_context = context_var(__name__, 'connection_context', default=None)
 
 
 def get_connection():
-    return (cm := var_conn_cm.get()) and cm.conn
+    exit = connection_context.get()
+    if exit is None:
+        return None
+    assert isinstance(exit, ExitStack)
+    return exit.conn
 
 
 class PooledConnection:
@@ -28,7 +31,6 @@ class PooledConnection:
         self.db = db
 
     def __getattr__(self, item):
-        # if conn := connection_var.get():
         if conn := get_connection():
             return getattr(conn, item)
         raise AttributeError
@@ -63,12 +65,13 @@ class PooledConnection:
     @contextmanager
     def ensure_conn(self):
         with ExitStack() as exit:
-            conn = exit.conn = exit.enter_context(self.get_conn())
-            var_conn_cm.set(exit)
+            conn = exit.enter_context(self.get_conn())
+            exit.conn = conn
+            connection_context.set(exit)
             if not hasattr(conn, '_django_init'):
                 conn._django_init = 'started'
                 self.db.init_connection_state()
-            exit.callback(lambda *exc_info: var_conn_cm.set(None))
+            exit.callback(lambda *exc_info: connection_context.set(None))
             yield conn
 
     def ensure_conn(self, ensure_conn=ensure_conn):
@@ -77,7 +80,7 @@ class PooledConnection:
         return ensure_conn(self)
 
     def cursor(self, *args, **kwargs):
-        cm = var_conn_cm.get()
+        cm = connection_context.get()
         assert isinstance(cm, ExitStack)
         conn = cm.conn
         cursor = self.make_cursor(conn, *args, **kwargs)

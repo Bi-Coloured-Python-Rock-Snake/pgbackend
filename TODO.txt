@@ -1,5 +1,2 @@
 
-
 all decorators: leave initial (async version) too under an attr
-
-transaction special handling

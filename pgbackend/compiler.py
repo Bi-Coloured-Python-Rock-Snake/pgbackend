@@ -6,7 +6,7 @@ from django.db.models.sql import compiler
 from django.db.models.sql.constants import MULTI, CURSOR, GET_ITERATOR_CHUNK_SIZE
 
 from pgbackend._record_result import record_result
-from pgbackend.connection import var_conn_cm
+from pgbackend.connection import connection_context, get_connection
 
 
 class Cursor(typing.NamedTuple):
@@ -36,17 +36,14 @@ class ExecuteSql:
 
 
 def extend_connection_lifetime(cursor):
-    #TODO if not transaction
-    exit = var_conn_cm.get().pop_all()
+    exit = connection_context.get().pop_all()
     exit.callback(cursor.close)
     cursor._exit_cm = exit
 
 
 class SQLCompiler(compiler.SQLCompiler):
 
-    def execute_sql(
-        self, result_type=MULTI, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE,
-    ):
+    def execute_sql(self, *, result_type, chunked_fetch, chunk_size):
         assert chunked_fetch
         cursor_fn = self.connection.cursor
         self.connection.chunked_cursor = record_result(cursor_fn, record := {})
@@ -63,11 +60,12 @@ class SQLCompiler(compiler.SQLCompiler):
 
     def execute_sql(
         self, result_type=MULTI, chunked_fetch=False, chunk_size=GET_ITERATOR_CHUNK_SIZE,
-        execute_sql_chunked_fetch=execute_sql,
+        execute_sql_keep_connection=execute_sql,
     ):
+        is_new_connection = not get_connection()
         with self.connection.ensure_conn():
-            if chunked_fetch:
-                result = execute_sql_chunked_fetch(
+            if chunked_fetch and is_new_connection:
+                result = execute_sql_keep_connection(
                     self, result_type=result_type, chunked_fetch=chunked_fetch, chunk_size=chunk_size
                 )
             else:
