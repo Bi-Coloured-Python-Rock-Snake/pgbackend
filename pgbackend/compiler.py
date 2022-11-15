@@ -1,6 +1,4 @@
 import typing
-from contextlib import ExitStack
-from functools import wraps
 
 from django.db.models.sql import compiler
 from django.db.models.sql.constants import MULTI, CURSOR, GET_ITERATOR_CHUNK_SIZE
