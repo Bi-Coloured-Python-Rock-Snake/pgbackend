@@ -11,12 +11,10 @@ cursor_var = context_var(__name__, 'cursor', default=None)
 
 class CursorWrapper:
 
-    def __init__(self, cursor, db, *, exit_cm=None):
+    def __init__(self, cursor, db):
         self.cursor = cursor
         self.db = db
-        if exit_cm is None:
-            exit_cm = ExemptCm(cursor)
-        self._exit_cm = exit_cm
+        self._exit_cm = ExemptCm(cursor)
 
     WRAP_ERROR_ATTRS = frozenset(["fetchone", "fetchmany", "fetchall", "nextset"])
 

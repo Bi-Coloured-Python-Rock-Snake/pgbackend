@@ -20,6 +20,10 @@ class DatabaseWrapper(DatabaseWrapper):
     def ensure_conn(self):
         return self.connection.ensure_conn
 
+    @property
+    def transaction(self):
+        return self.connection.transaction
+
     def make_debug_cursor(self, cursor):
         return cursor
 

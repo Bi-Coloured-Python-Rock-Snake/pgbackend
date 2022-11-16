@@ -1,10 +1,11 @@
 import typing
+from contextlib import ExitStack
 
 from django.db.models.sql import compiler
 from django.db.models.sql.constants import MULTI, CURSOR, GET_ITERATOR_CHUNK_SIZE
 
 from pgbackend._record_result import record_result
-from pgbackend.connection import connection_context, get_connection
+from pgbackend.connection import var_connection, get_connection
 
 
 class Cursor(typing.NamedTuple):
@@ -33,15 +34,9 @@ class ExecuteSql:
             return super().execute_sql(*args, **kwargs)
 
 
-def extend_connection_lifetime(cursor):
-    exit = connection_context.get().pop_all()
-    exit.callback(cursor.close)
-    cursor._exit_cm = exit
-
-
 class SQLCompiler(compiler.SQLCompiler):
 
-    def execute_sql(self, *, result_type, chunked_fetch, chunk_size):
+    def execute_sql(self, *, result_type, chunked_fetch, chunk_size, exitstack):
         assert chunked_fetch
         cursor_fn = self.connection.cursor
         self.connection.chunked_cursor = record_result(cursor_fn, record := {})
@@ -53,7 +48,10 @@ class SQLCompiler(compiler.SQLCompiler):
             self.connection.chunked_cursor = cursor_fn
         assert isinstance(result, typing.Iterator)
         cursor = record['result']
-        extend_connection_lifetime(cursor)
+        # extend connection lifetime
+        exitstack = exitstack.pop_all()
+        exitstack.callback(cursor.close)
+        cursor._exit_cm = exitstack
         return result
 
     def execute_sql(
@@ -61,10 +59,12 @@ class SQLCompiler(compiler.SQLCompiler):
         execute_sql_keep_connection=execute_sql,
     ):
         is_new_connection = not get_connection()
-        with self.connection.ensure_conn():
+        with ExitStack() as exit:
+            exit.enter_context(self.connection.ensure_conn())
             if chunked_fetch and is_new_connection:
                 result = execute_sql_keep_connection(
-                    self, result_type=result_type, chunked_fetch=chunked_fetch, chunk_size=chunk_size
+                    self, result_type=result_type, chunked_fetch=chunked_fetch, chunk_size=chunk_size,
+                    exitstack=exit,
                 )
             else:
                 result = super().execute_sql(

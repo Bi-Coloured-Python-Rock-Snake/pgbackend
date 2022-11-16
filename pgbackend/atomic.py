@@ -19,4 +19,4 @@ class Atomic:
     @cached_property
     def _cm(self):
         db = connections[self.using]
-        return db.connection.ensure_conn()
+        return db.transaction()
