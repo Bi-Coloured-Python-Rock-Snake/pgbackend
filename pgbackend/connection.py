@@ -5,7 +5,7 @@ import psycopg_pool
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.backends.postgresql import base
-from greenhack import exempt, exempt_cm, context_var
+from greenhack import exempt, exempt_cm, context_var, as_async
 from psycopg import IsolationLevel
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
@@ -47,45 +47,52 @@ class PooledConnection:
         assert (conn := get_connection())
         exempt(conn.rollback)()
 
-    @contextmanager
-    def transaction(self):
-        with self.ensure_conn() as conn:
-            transaction = exempt_cm(conn.transaction)
-            with transaction():
-                yield
-
-    @exempt_cm
-    def ensure_conn(self):
+    @asynccontextmanager
+    async def make_conn_async(self):
         if self.pool is None:
-            self.start_pool()
-        async_cm = self.pool.connection()
-        return async_cm
-
-    @contextmanager
-    def ensure_conn(self, ensure_conn=ensure_conn):
-        with ensure_conn(self) as conn:
+            await self.start_pool()
+        async with self.pool.connection() as conn:
             var_connection.set(conn)
             if not hasattr(conn, '_django_init'):
                 conn._django_init = 'started'
-                self.db.init_connection_state()
+                init_connection_state = as_async(self.db.init_connection_state)
+                await init_connection_state()
             try:
                 yield conn
             finally:
                 var_connection.set(None)
 
-    def ensure_conn(self, ensure_conn=ensure_conn):
+    @asynccontextmanager
+    async def transaction(self):
+        async with self.make_conn_async() as conn:
+            async with conn.transaction():
+                yield
+
+    @exempt_cm
+    def transaction(self, transaction=transaction):
+        if conn := get_connection():
+            return conn.transaction()
+        return transaction(self)
+
+    def ensure_conn_async(self):
         if conn := get_connection():
             return nullcontext(conn)
-        return ensure_conn(self)
+        return self.make_conn_async()
 
-    def cursor(self, *args, **kwargs):
-        with self.ensure_conn() as conn:
-            cursor = self.make_cursor(conn, *args, **kwargs)
-            return cursor
+    @property
+    def ensure_conn(self):
+        return exempt_cm(self.ensure_conn_async)
+
+    #TODO ucontextmanager
 
     @exempt
-    async def make_cursor(self, conn, *args, **kwargs):
-        cursor = await conn.cursor(*args, **kwargs).__aenter__()
+    async def cursor(self, *args, **kwargs):
+        async with self.ensure_conn_async() as conn:
+            cursor = await conn.cursor(*args, **kwargs).__aenter__()
+            cursor = self.make_cursor(cursor)
+            return cursor
+
+    def make_cursor(self, cursor):
         if self.db.queries_logged:
             return CursorDebugWrapper(cursor, self.db)
         else:
