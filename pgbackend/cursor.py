@@ -1,5 +1,5 @@
 import functools
-from contextlib import ExitStack
+from typing import ContextManager
 
 from django.db import NotSupportedError
 from django.db.backends import utils
@@ -10,14 +10,11 @@ cursor_var = context_var(__name__, 'cursor', default=None)
 
 
 class CursorWrapper:
-    _exit_cm = None
+    _exit_cm: ContextManager = None
 
     def __init__(self, cursor, db):
         self.cursor = cursor
         self.db = db
-        exit = ExitStack()
-        exit.callback(self.close)
-        self._exit_cm = exit
 
     WRAP_ERROR_ATTRS = frozenset(["fetchone", "fetchmany", "fetchall", "nextset"])
 
@@ -35,8 +32,13 @@ class CursorWrapper:
     def __enter__(self):
         return self
 
+    def __exit__(self, *exc_info):
+        self.close()
+
     @property
-    def __exit__(self):
+    def __exit__(self, __exit__=__exit__):
+        if not self._exit_cm:
+            return __exit__.__get__(self)
         return self._exit_cm.__exit__
 
     def callproc(self, name, args=None):
