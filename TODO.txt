@@ -1,4 +1,2 @@
 
 all decorators: leave initial (async version) too under an attr
-
-fut = init_conn_state()

@@ -1,20 +1,23 @@
 import functools
+from contextlib import ExitStack
 
 from django.db import NotSupportedError
 from django.db.backends import utils
 from greenhack import exempt, context_var, exempt_it
-from greenhack.context_managers import ExemptCm
 from psycopg import sql
 
 cursor_var = context_var(__name__, 'cursor', default=None)
 
 
 class CursorWrapper:
+    _exit_cm = None
 
     def __init__(self, cursor, db):
         self.cursor = cursor
         self.db = db
-        self._exit_cm = ExemptCm(cursor)
+        exit = ExitStack()
+        exit.callback(self.close)
+        self._exit_cm = exit
 
     WRAP_ERROR_ATTRS = frozenset(["fetchone", "fetchmany", "fetchall", "nextset"])
 
@@ -117,10 +120,15 @@ class CursorWrapper:
     def copy(self):
         return exempt(self.cursor.copy)
 
-    @property
     def close(self):
-        return exempt(self.cursor.close)
+        with self._exit_cm:
+            pass
 
+    @property
+    def close(self, close_via_cm=close):
+        if self._exit_cm:
+            return close_via_cm.__get__(self)
+        return exempt(self.cursor.close)
 
 
 class CursorDebugWrapper(utils.CursorDebugWrapper, CursorWrapper, utils.CursorWrapper):

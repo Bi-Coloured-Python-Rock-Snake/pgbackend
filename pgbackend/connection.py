@@ -1,16 +1,15 @@
-from contextlib import nullcontext, contextmanager, ExitStack, asynccontextmanager
+from contextlib import nullcontext, asynccontextmanager
 from functools import cached_property
 
 import psycopg_pool
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.backends.postgresql import base
-from greenhack import exempt, exempt_cm, context_var, as_async
+from greenhack import exempt, context_var, as_async, universal_cm
+from pgbackend.cursor import CursorDebugWrapper, CursorWrapper
 from psycopg import IsolationLevel
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
-
-from pgbackend.cursor import CursorDebugWrapper, CursorWrapper
 
 var_connection = context_var(__name__, 'connection', default=None)
 
@@ -68,26 +67,21 @@ class PooledConnection:
             async with conn.transaction():
                 yield
 
-    @exempt_cm
+    @universal_cm
     def transaction(self, transaction=transaction):
         if conn := get_connection():
             return conn.transaction()
         return transaction(self)
 
-    def ensure_conn_async(self):
+    @universal_cm
+    def ensure_conn(self):
         if conn := get_connection():
             return nullcontext(conn)
         return self.make_conn_async()
 
-    @property
-    def ensure_conn(self):
-        return exempt_cm(self.ensure_conn_async)
-
-    #TODO ucontextmanager
-
     @exempt
     async def cursor(self, *args, **kwargs):
-        async with self.ensure_conn_async() as conn:
+        async with self.ensure_conn() as conn:
             cursor = await conn.cursor(*args, **kwargs).__aenter__()
             cursor = self.make_cursor(cursor)
             return cursor
