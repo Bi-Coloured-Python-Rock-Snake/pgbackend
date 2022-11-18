@@ -36,9 +36,9 @@ class CursorWrapper:
         self.close()
 
     @property
-    def __exit__(self, __exit__=__exit__):
+    def __exit__(self, close=__exit__):
         if not self._exit_cm:
-            return __exit__.__get__(self)
+            return close.__get__(self)
         return self._exit_cm.__exit__
 
     def callproc(self, name, args=None):
