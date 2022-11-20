@@ -11,8 +11,6 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.10"
 psycopg = {extras = ["pool"], version = "^3.1.4"}
-django = {git = "https://github.com/apollo13/django.git", rev = "psycopg3"}
-greenhack = {git = "https://github.com/Bi-Coloured-Python-Rock-Snake/greenhack.git"}
 httpx = "^0.23.0"
 channels = "^4.0.0"
 uvicorn = {extras = ["standard"], version = "^0.19.0"}

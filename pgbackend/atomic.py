@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from functools import cached_property
 
-from django.db import connections
+from django.db.transaction import get_connection
 
 
 @dataclass
@@ -18,5 +18,5 @@ class Atomic:
 
     @cached_property
     def _cm(self):
-        db = connections[self.using]
+        db = get_connection(self.using)
         return db.transaction()
