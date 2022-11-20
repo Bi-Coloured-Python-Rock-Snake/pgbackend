@@ -1,13 +1,12 @@
-from django.db import connections
-from django.db.transaction import Atomic
+from django.db.transaction import Atomic, get_connection
 
-import pgbackend.base
 import pgbackend.atomic
+import pgbackend.base
 
 
 def __new__(cls, using, *args, __new__=Atomic.__new__,
             **kwargs):
-    db = connections[using]
+    db = get_connection(using)
     match db:
         case pgbackend.base.DatabaseWrapper():
             return pgbackend.atomic.Atomic(using, *args, **kwargs)

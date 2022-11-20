@@ -1,15 +1,17 @@
 from contextlib import nullcontext, asynccontextmanager
 from functools import cached_property
 
+import psycopg
 import psycopg_pool
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.backends.postgresql import base
 from greenhack import exempt, context_var, as_async, universal_cm
-from pgbackend.cursor import CursorDebugWrapper, CursorWrapper
 from psycopg import IsolationLevel
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
+
+from pgbackend.cursor import CursorDebugWrapper, CursorWrapper
 
 var_connection = context_var(__name__, 'connection', default=None)
 
@@ -18,16 +20,52 @@ def get_connection():
     return var_connection.get()
 
 
-class PooledConnection:
-    pool = None
-
+class ConfiguredConnection:
     def __init__(self, db):
         self.db = db
+
+    @cached_property
+    def adapters(self):
+        ctx = base.get_adapters_template(settings.USE_TZ, self.db.timezone)
+        return AdaptersMap(ctx.adapters)
+
+    async def configure_connection(self, connection):
+        connection._adapters = self.adapters
+
+        options = self.db.settings_dict["OPTIONS"]
+        try:
+            isolevel = options["isolation_level"]
+        except KeyError:
+            isolation_level = IsolationLevel.READ_COMMITTED
+        else:
+            try:
+                isolation_level = IsolationLevel(isolevel)
+            except ValueError:
+                raise ImproperlyConfigured(
+                    "bad isolation_level: %s. Choose one of the "
+                    "'psycopg.IsolationLevel' values" % (options["isolation_level"],)
+                )
+        await connection.set_isolation_level(isolation_level)
 
     def __getattr__(self, item):
         if conn := get_connection():
             return getattr(conn, item)
         raise AttributeError
+
+    def make_cursor(self, cursor):
+        if self.db.queries_logged:
+            return CursorDebugWrapper(cursor, self.db)
+        else:
+            return CursorWrapper(cursor, self.db)
+
+
+class PooledConnection(ConfiguredConnection):
+    pool = None
+
+    # def __getattr__(self, item):
+    #     if conn := get_connection():
+    #         return getattr(conn, item)
+    #     raise AttributeError
 
     @exempt
     async def start_pool(self):
@@ -48,12 +86,13 @@ class PooledConnection:
 
     @asynccontextmanager
     async def make_conn_async(self):
-        if self.pool is None:
+        if self.pool is None or self.pool.closed:
             await self.start_pool()
         async with self.pool.connection() as conn:
             var_connection.set(conn)
             if not hasattr(conn, '_django_init'):
                 conn._django_init = 'started'
+                #TODO integrate in configure_connection
                 init_connection_state = as_async(self.db.init_connection_state)
                 await init_connection_state()
             try:
@@ -86,31 +125,62 @@ class PooledConnection:
             cursor = self.make_cursor(cursor)
             return cursor
 
-    def make_cursor(self, cursor):
-        if self.db.queries_logged:
-            return CursorDebugWrapper(cursor, self.db)
+    # def make_cursor(self, cursor):
+    #     if self.db.queries_logged:
+    #         return CursorDebugWrapper(cursor, self.db)
+    #     else:
+    #         return CursorWrapper(cursor, self.db)
+
+    # async def configure_connection(self, connection):
+    #     connection._adapters = self.adapters
+    #
+    #     options = self.db.settings_dict["OPTIONS"]
+    #     try:
+    #         isolevel = options["isolation_level"]
+    #     except KeyError:
+    #         isolation_level = IsolationLevel.READ_COMMITTED
+    #     else:
+    #         try:
+    #             isolation_level = IsolationLevel(isolevel)
+    #         except ValueError:
+    #             raise ImproperlyConfigured(
+    #                 "bad isolation_level: %s. Choose one of the "
+    #                 "'psycopg.IsolationLevel' values" % (options["isolation_level"],)
+    #             )
+    #     await connection.set_isolation_level(isolation_level)
+
+    @property
+    def close(self):
+        if self.pool is None:
+            return lambda: None
         else:
-            return CursorWrapper(cursor, self.db)
+            return exempt(self.pool.close)
 
-    @cached_property
-    def adapters(self):
-        ctx = base.get_adapters_template(settings.USE_TZ, self.db.timezone)
-        return AdaptersMap(ctx.adapters)
 
-    async def configure_connection(self, connection):
-        connection._adapters = self.adapters
+class NoDbConnection(ConfiguredConnection):
 
-        options = self.db.settings_dict["OPTIONS"]
-        try:
-            isolevel = options["isolation_level"]
-        except KeyError:
-            isolation_level = IsolationLevel.READ_COMMITTED
-        else:
+    @asynccontextmanager
+    async def _connect(self):
+        conn_params = self.db.get_connection_params()
+        conninfo = make_conninfo(**conn_params)
+        conn = await psycopg.AsyncConnection.connect(conninfo, autocommit=True)
+        async with conn:
+            await self.configure_connection(conn)
+            var_connection.set(conn)
             try:
-                isolation_level = IsolationLevel(isolevel)
-            except ValueError:
-                raise ImproperlyConfigured(
-                    "bad isolation_level: %s. Choose one of the "
-                    "'psycopg.IsolationLevel' values" % (options["isolation_level"],)
-                )
-        await connection.set_isolation_level(isolation_level)
+                yield conn
+            finally:
+                var_connection.set(None)
+        # return conn
+
+    @universal_cm
+    @asynccontextmanager
+    async def cursor(self, *args, **kwargs):
+        async with self._connect() as conn:
+            async with conn.cursor(*args, **kwargs) as cursor:
+                cursor = self.make_cursor(cursor)
+                yield cursor
+
+    def close(self):
+        # Should be already closed
+        assert not get_connection()
