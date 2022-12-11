@@ -15,6 +15,10 @@ httpx = "^0.23.0"
 channels = "^4.0.0"
 uvicorn = {extras = ["standard"], version = "^0.19.0"}
 
+[tool.poetry.group.dev.dependencies]
+django = {path = "/home/pwtail/sof/godjan"}
+greenhack = {path = "/home/pwtail/sof/ghack"}
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
