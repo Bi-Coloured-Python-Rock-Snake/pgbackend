@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.backends.postgresql import base
 from greenhack import exempt, context_var, as_async, universal_cm
-from psycopg import IsolationLevel
+from psycopg import IsolationLevel, AsyncConnection
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
 
@@ -69,8 +69,10 @@ class PooledConnection(ConfiguredConnection):
 
     @exempt
     async def start_pool(self):
-        conn_params = self.db.get_connection_params()
-        conninfo = make_conninfo(**conn_params)
+        params = self.db.get_connection_params()
+        params = await AsyncConnection._get_connection_params(conninfo="", **params)
+        del params['context']
+        conninfo = make_conninfo(**params)
         pool = psycopg_pool.AsyncConnectionPool(conninfo, open=False,
                                                 configure=self.configure_connection)
         await pool.open()
