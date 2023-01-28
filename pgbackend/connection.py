@@ -3,10 +3,10 @@ from functools import cached_property
 
 import psycopg
 import psycopg_pool
+from creature import exempt, context_var, as_async, universal_cm
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.backends.postgresql import base
-from greenhack import exempt, context_var, as_async, universal_cm
 from psycopg import IsolationLevel, AsyncConnection
 from psycopg.adapt import AdaptersMap
 from psycopg.conninfo import make_conninfo
@@ -163,8 +163,10 @@ class NoDbConnection(ConfiguredConnection):
 
     @asynccontextmanager
     async def _connect(self):
-        conn_params = self.db.get_connection_params()
-        conninfo = make_conninfo(**conn_params)
+        params = self.db.get_connection_params()
+        params = await AsyncConnection._get_connection_params(conninfo="", **params)
+        del params['context']
+        conninfo = make_conninfo(**params)
         conn = await psycopg.AsyncConnection.connect(conninfo, autocommit=True)
         async with conn:
             await self.configure_connection(conn)

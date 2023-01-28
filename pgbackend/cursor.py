@@ -1,9 +1,9 @@
 import functools
 from typing import ContextManager
 
+from creature import exempt, context_var, exempt_it
 from django.db import NotSupportedError
 from django.db.backends import utils
-from greenhack import exempt, context_var, exempt_it
 from psycopg import sql
 
 cursor_var = context_var(__name__, 'cursor', default=None)

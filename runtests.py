@@ -35,8 +35,8 @@ else:
     from django.utils.log import DEFAULT_LOGGING
 
 # pwt
-import greenhack
-greenhack.start_loop()
+import creature
+creature.start_loop()
 # end pwt
 
 

@@ -3,6 +3,9 @@ This is a slightly modified channels code
 """
 
 
+from channels.middleware import BaseMiddleware
+from channels.sessions import CookieMiddleware, SessionMiddleware
+from creature import as_async
 from django.conf import settings
 from django.contrib.auth import (
     BACKEND_SESSION_KEY,
@@ -16,10 +19,6 @@ from django.contrib.auth import (
 )
 from django.utils.crypto import constant_time_compare
 from django.utils.functional import LazyObject
-
-from greenhack import as_async
-from channels.middleware import BaseMiddleware
-from channels.sessions import CookieMiddleware, SessionMiddleware
 
 
 @as_async

@@ -1,5 +1,5 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from greenhack import exempt
+from creature import exempt
 
 consumers = {}
 

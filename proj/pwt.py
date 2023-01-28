@@ -1,10 +1,10 @@
 import asyncio
 from functools import wraps
 
-from greenhack import exempt, as_async
+from creature import exempt, as_async
 
 
-def wrap_co(co_func):
+def wrap_outer(co_func):
     @wraps(co_func)
     def wrapper(*args, **kwargs):
         gen = co_func(*args, **kwargs)
@@ -16,8 +16,7 @@ def wrap_co(co_func):
                 return ex.value
             if val == 'start':
                 def fun():
-                    val = gen.send('started')
-                    assert val == 'end'
+                    assert gen.send('started') == 'end'
                 task = as_async(fun)()
                 task = asyncio.create_task(task)
                 yield from task
@@ -72,3 +71,11 @@ async def main():
 
     async with io:
         recurse()
+
+if __name__ == '__main__':
+    @wrap_outer
+    async def outer():
+        await main()
+
+
+    asyncio.run(outer())

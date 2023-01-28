@@ -21,6 +21,6 @@ def main():
 
 
 if __name__ == "__main__":
-    import greenhack
-    greenhack.start_loop()
+    import creature
+    creature.start_loop()
     main()

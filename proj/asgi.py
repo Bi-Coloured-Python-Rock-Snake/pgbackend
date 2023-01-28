@@ -6,7 +6,7 @@ from django.core.asgi import get_asgi_application
 
 from auth_middleware import AuthMiddlewareStack
 from kitchen.ws import Consumer
-from proj.pwt import wrap_co
+from proj.pwt import wrap_outer
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "proj.settings")
@@ -29,7 +29,7 @@ class Obj:
         self.send = send
         self.application = application
 
-    @wrap_co
+    @wrap_outer
     async def _await__(self):
         return await self.application(self.scope, self.receive, self.send)
 

@@ -2,10 +2,10 @@ import random
 from os.path import dirname
 from pathlib import Path
 
+from creature import as_async
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from greenhack import as_async
 
 import myhttpx
 from kitchen import ws

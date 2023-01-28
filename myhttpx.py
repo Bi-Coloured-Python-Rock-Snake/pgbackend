@@ -1,7 +1,5 @@
-from httpx import *
-
 import httpx
-from greenhack import exempt
+from creature import exempt
 
 
 def make_method(method):
