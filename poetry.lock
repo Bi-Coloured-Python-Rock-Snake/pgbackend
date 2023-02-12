@@ -119,12 +119,13 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
-name = "django"
-version = "4.2a1"
+name = "Django"
+version = "4.2.dev20230105182656"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
 python-versions = ">=3.8"
+develop = true
 
 [package.dependencies]
 asgiref = ">=3.6.0"
@@ -134,6 +135,10 @@ tzdata = {version = "*", markers = "sys_platform == \"win32\""}
 [package.extras]
 argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
+
+[package.source]
+type = "directory"
+url = "../../sof2/django"
 
 [[package]]
 name = "executing"
@@ -576,7 +581,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "21c2a1d66f8428cf7c68eaf614c32c2546c354059857d3fc38f5f9fb48de9487"
+content-hash = "a6947fde21df2ae6787ada4d809064f1621cc0bc0be9e325215d94f155204521"
 
 [metadata.files]
 anyio = [
@@ -622,10 +627,7 @@ decorator = [
     {file = "decorator-5.1.1-py3-none-any.whl", hash = "sha256:b8c3f85900b9dc423225913c5aace94729fe1fa9763b38939a95226f02d37186"},
     {file = "decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330"},
 ]
-django = [
-    {file = "Django-4.2a1-py3-none-any.whl", hash = "sha256:e913e60991a0c2a5f099a80ea1e2ec90b1636e6deb60bad16b89086819b48d4b"},
-    {file = "Django-4.2a1.tar.gz", hash = "sha256:3a29fc014f46fd6a552296fd1cfc77f616c4120b68cc117eee4a8237aa163f7a"},
-]
+Django = []
 executing = [
     {file = "executing-1.2.0-py2.py3-none-any.whl", hash = "sha256:0314a69e37426e3608aada02473b4161d4caf5a4b244d1d0c48072b8fee7bacc"},
     {file = "executing-1.2.0.tar.gz", hash = "sha256:19da64c18d2d851112f09c287f8d3dbbdf725ab0e569077efb6cdcbd3497c107"},
